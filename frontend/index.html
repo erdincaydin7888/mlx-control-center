@@ -40,7 +40,7 @@ html, body {
   background-image: radial-gradient(circle at top right, #1a1e36, #06070a 60%);
   color: var(--text-main);
   overflow: hidden;
-  font-size: 15px;
+  font-size: 18px; /* BUYUK FONT */
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -76,6 +76,7 @@ html, body {
   flex: 1;
   display: flex;
   overflow: hidden;
+  position: relative;
 }
 
 .sidebar {
@@ -130,10 +131,10 @@ html, body {
   width: 100%;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  padding: 8px 12px;
+  padding: 12px 16px; /* Biraz daha genis dolgu */
   border-radius: 6px;
   color: var(--text-main);
-  font-size: 15px;
+  font-size: 18px; /* BUYUK FONT */
   outline: none;
   transition: border-color 0.15s;
 }
@@ -172,15 +173,15 @@ html, body {
   gap: 4px;
 }
 .sidebar-title {
-  font-size: 13px;
+  font-size: 16px; /* BUYUK FONT */
   font-weight: 600;
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin: 8px 4px 4px;
+  margin: 12px 4px 6px;
 }
 .list-item {
-  padding: 10px 12px;
+  padding: 12px 16px;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.1s;
@@ -189,57 +190,66 @@ html, body {
 .list-item:hover { background: var(--bg-hover); }
 .list-item.selected { background: var(--bg-card); border-color: var(--border); }
 .list-item.active-running { border-left: 3px solid var(--green); }
-.item-title { font-weight: 500; font-size: 15px; margin-bottom: 4px; line-height: 1.3; word-break: break-all; }
-.item-meta { display: flex; gap: 6px; font-size: 13px; color: var(--text-muted); align-items: center; }
-.badge { background: var(--bg-card); border: 1px solid var(--border); padding: 1px 6px; border-radius: 4px; }
+.item-title { font-weight: 500; font-size: 18px; margin-bottom: 4px; line-height: 1.3; word-break: break-all; } /* BUYUK FONT */
+.item-meta { display: flex; gap: 8px; font-size: 15px; color: var(--text-muted); align-items: center; } /* BUYUK FONT */
+.badge { background: var(--bg-card); border: 1px solid var(--border); padding: 2px 8px; border-radius: 6px; }
 
-/* Sidebar System Widget */
+/* Sidebar System Widget -> Absolute Bottom Right Widget */
 .system-widget {
-  padding: 16px 20px;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 380px;
+  padding: 20px 24px;
   background: var(--bg-panel);
-  border-top: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  border-top-left-radius: 16px;
+  z-index: 50;
+  box-shadow: -4px -4px 24px rgba(0,0,0,0.5);
 }
-.sys-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; color: var(--text-muted); }
+.sys-row { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 8px; color: var(--text-muted); }
 .sys-val { color: var(--text-main); font-variant-numeric: tabular-nums; }
-.progress-bg { width: 100%; height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 12px; overflow: hidden; }
+.progress-bg { width: 100%; height: 6px; background: var(--border); border-radius: 3px; margin-bottom: 16px; overflow: hidden; }
 .progress-fg { height: 100%; background: var(--text-muted); transition: width 0.3s ease; }
 .progress-fg.mem { background: var(--blue); }
 
 /* Main Top Bar */
 .main-header {
-  padding: 20px 32px;
+  padding: 24px 32px;
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  min-height: 80px;
+  min-height: 90px;
 }
-.model-info-block h1 { font-size: 24px; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
-.model-publisher { font-size: 15px; color: var(--text-muted); }
-.status-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); }
+.model-info-block h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
+.model-publisher { font-size: 18px; color: var(--text-muted); }
+.status-indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--text-dim); }
 .status-indicator.running { background: var(--green); }
 .status-indicator.starting { background: var(--orange); }
 
-.action-block { display: flex; align-items: center; gap: 12px; }
+.action-block { display: flex; align-items: center; gap: 16px; }
 .port-input {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text-main);
-  padding: 6px 12px;
+  padding: 8px 12px;
   border-radius: 6px;
-  width: 80px;
-  font-size: 13px;
+  width: 90px;
+  font-size: 16px;
   text-align: center;
 }
 .btn {
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 15px;
-  font-weight: 500;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
   transition: all 0.15s;
-  display: inline-flex; align-items: center; gap: 6px;
+  display: inline-flex; align-items: center; gap: 8px;
 }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-primary { background: var(--accent); color: var(--accent-fg); }
@@ -271,11 +281,11 @@ html, body {
   flex-direction: column;
   gap: 24px;
 }
-.msg { display: flex; gap: 16px; max-width: 800px; margin: 0 auto; width: 100%; }
-.msg-avatar { width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+.msg { display: flex; gap: 16px; max-width: 900px; margin: 0 auto; width: 100%; }
+.msg-avatar { width: 36px; height: 36px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; flex-shrink: 0; }
 .msg.user .msg-avatar { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); }
 .msg.assistant .msg-avatar { background: var(--accent); color: var(--accent-fg); }
-.msg-content { flex: 1; font-size: 15px; line-height: 1.6; color: var(--text-main); padding-top: 3px; white-space: pre-wrap; word-break: break-word; }
+.msg-content { flex: 1; font-size: 18px; line-height: 1.6; color: var(--text-main); padding-top: 3px; white-space: pre-wrap; word-break: break-word; }
 
 .chat-input-wrapper {
   padding: 24px 32px;
@@ -294,13 +304,13 @@ html, body {
   width: 100%;
   background: transparent;
   border: none;
-  padding: 12px 48px 12px 14px;
+  padding: 16px 56px 16px 16px;
   color: var(--text-main);
-  font-size: 15px;
+  font-size: 18px; /* BUYUK FONT */
   font-family: inherit;
   resize: none;
   outline: none;
-  max-height: 200px;
+  max-height: 250px;
 }
 .chat-send-btn {
   position: absolute; right: 8px; bottom: 8px;
@@ -324,10 +334,10 @@ html, body {
   margin-bottom: 32px;
 }
 .prop-item {
-  display: flex; flex-direction: column; gap: 4px;
+  display: flex; flex-direction: column; gap: 6px;
 }
-.prop-label { font-size: 12px; color: var(--text-muted); }
-.prop-val { font-size: 14px; font-weight: 500; }
+.prop-label { font-size: 15px; color: var(--text-muted); }
+.prop-val { font-size: 18px; font-weight: 600; }
 
 .compat-card {
   background: var(--bg-card);
@@ -389,17 +399,6 @@ html, body {
     <div class="sidebar-list" id="modelList">
       <div style="padding:20px; text-align:center; color:var(--text-dim); font-size:12px;">Yükleniyor...</div>
     </div>
-
-    <div class="system-widget">
-      <div class="sys-row"><span>Bellek (RAM)</span> <span id="sysMem">—</span></div>
-      <div class="progress-bg"><div class="progress-fg mem" id="sysMemBar" style="width:0%"></div></div>
-      <div class="sys-row"><span>CPU / Compute</span> <span id="sysCpu">—</span></div>
-      <div class="progress-bg"><div class="progress-fg" id="sysCpuBar" style="width:0%"></div></div>
-      <div class="sys-row" style="margin-top:12px; font-size:11px">
-        <span id="diskUsed" style="color:var(--text-dim)">Depolama: —</span>
-        <span id="modelCount" style="color:var(--text-dim)">Modeller: —</span>
-      </div>
-    </div>
     </aside>
 
     <!-- Main Content -->
@@ -408,6 +407,17 @@ html, body {
         <!-- Javascript ile doldurulacak -->
       </div>
     </main>
+    
+    <div class="system-widget">
+      <div class="sys-row"><span style="font-weight:600">Sistem Belleği (RAM)</span> <span id="sysMem" style="color:var(--blue)">—</span></div>
+      <div class="progress-bg" style="height:6px"><div class="progress-fg mem" id="sysMemBar" style="width:0%"></div></div>
+      <div class="sys-row" style="margin-top:16px"><span style="font-weight:600">Merkezi İşlemci (CPU)</span> <span id="sysCpu">—</span></div>
+      <div class="progress-bg" style="height:6px"><div class="progress-fg" id="sysCpuBar" style="width:0%"></div></div>
+      <div class="sys-row" style="margin-top:20px; font-size:13px; font-weight:500">
+        <span id="diskUsed" style="color:var(--text-dim)">Depolama: —</span>
+        <span id="modelCount" style="color:var(--text-dim)">Modeller: —</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -640,11 +650,11 @@ function renderMain() {
       </div>
       <div class="action-block">
         <div style="display:flex; flex-direction:column; gap:4px; max-width:90px">
-          <label style="font-size:10px; color:var(--text-dim); text-transform:uppercase">Max Tokens</label>
+          <label style="font-size:13px; color:var(--text-dim); text-transform:uppercase">Max Tokens</label>
           <input type="number" id="maxTokensInp" class="port-input" style="width:100%" value="${defaultTokens}">
         </div>
         <div style="display:flex; flex-direction:column; gap:4px; max-width:80px">
-          <label style="font-size:10px; color:var(--text-dim); text-transform:uppercase">Proxy Port</label>
+          <label style="font-size:13px; color:var(--text-dim); text-transform:uppercase">Proxy Port</label>
           <input type="number" id="portInp" class="port-input" value="${isAct ? activeProcess.proxy_port || 8087 : 8087}">
         </div>
         <div style="width:1px; height:32px; background:var(--border); margin:0 8px"></div>
@@ -671,7 +681,7 @@ function renderMain() {
             <textarea id="chatInput" class="chat-textarea" placeholder="${isRunning ? 'Mesaj yazın (Enter)...' : 'Devre dışı.'}" ${!isRunning?'disabled':''} rows="1" onkeydown="handleEnter(event)"></textarea>
             <button class="chat-send-btn" onclick="sendChat()" ${!isRunning?'disabled':''}>${ICONS.send}</button>
           </div>
-          <div style="text-align:center;font-size:11px;color:var(--text-dim);margin-top:12px">
+          <div style="text-align:center;font-size:14px;color:var(--text-dim);margin-top:16px">
              Bu arayüz HTTP üzerinden lokal MLX Python köprüsüne (proxy) bağlıdır.
           </div>
         </div>
@@ -680,7 +690,7 @@ function renderMain() {
       <!-- Right: Details & Compat -->
       <section class="details-section">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
-           <div style="font-size:12px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em">Sistem & Mimari</div>
+           <div style="font-size:15px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em">Sistem & Mimari</div>
         </div>
         
         <div class="prop-grid">
@@ -740,14 +750,14 @@ async function runCompatCheck(m, cfg) {
     
     block.innerHTML = `
       <div class="compat-card" style="border-left: 3px solid ${color};">
-        <div class="compat-hdr" style="font-size:14px; margin-bottom:8px">
+        <div class="compat-hdr" style="font-size:17px; margin-bottom:8px">
            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
            Github: Can I Run This LLM?
         </div>
-        <div style="color:var(--text-dim); font-size:11px; margin-bottom:20px;">
+        <div style="color:var(--text-dim); font-size:14px; margin-bottom:20px;">
           (Github Model Donanım Parametre Uyumluluk Testi)
         </div>
-        <div class="compat-grid">
+        <div class="compat-grid" style="font-size:16px;">
           <div class="compat-row"><span style="color:var(--text-muted)">Durum</span> <b style="color:${color}; display:flex; align-items:center; gap:4px">${icon} ${res.can_run ? 'Çalıştırılabilir' : 'RAM Yetersiz'}</b></div>
           <div class="compat-row"><span style="color:var(--text-muted)">İhtiyaç Duyulan VRAM</span> <span>${res.estimated_vram_gb} GB</span></div>
           <div class="compat-row"><span style="color:var(--text-muted)">Hız Öngörüsü</span> <span>${res.speed_tier}</span></div>
