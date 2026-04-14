@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MLX Control Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Reset & Base */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg-app: #06070a;
+  --bg-panel: rgba(10, 12, 18, 0.5);
+  --bg-card: rgba(20, 22, 30, 0.6);
+  --bg-hover: rgba(40, 44, 60, 0.4);
+  
+  --border: #262626;
+  --border-focus: #404040;
+  
+  --text-main: #f5f5f5;
+  --text-muted: #a3a3a3;
+  --text-dim: #737373;
+  
+  --accent: #22d3ee;
+  --accent-fg: #000000;
+  
+  --blue: #3b82f6;
+  --green: #10b981;
+  --red: #ef4444;
+  --orange: #f59e0b;
+  
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+html, body {
+  height: 100vh;
+  font-family: var(--font-sans);
+  background: var(--bg-app);
+  background-image: radial-gradient(circle at top right, #1a1e36, #06070a 60%);
+  color: var(--text-main);
+  overflow: hidden;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Layout */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+}
+
+.topbar {
+  flex: 0 0 90px;
+  background: rgba(8, 10, 15, 0.75);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  z-index: 10;
+}
+.topbar-center {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-weight: 700; font-size: 26px;
+}
+.topbar-right {
+  display: flex; flex-direction: column; gap: 4px; color: var(--text-main); font-size: 18px; font-weight: 600; text-align: right;
+}
+
+.app-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 500px;
+  background: var(--bg-panel);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  position: relative;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+
+/* Sidebar Header */
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.search-input {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: var(--text-main);
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.search-input:focus {
+  border-color: var(--text-muted);
+}
+.filter-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.filter-row::-webkit-scrollbar { display: none; }
+.filter-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.filter-btn:hover { background: var(--bg-hover); color: var(--text-main); }
+.filter-btn.active { background: var(--text-main); color: var(--bg-app); border-color: var(--text-main); }
+
+/* Model List */
+.sidebar-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sidebar-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 8px 4px 4px;
+}
+.list-item {
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.1s;
+  border: 1px solid transparent;
+}
+.list-item:hover { background: var(--bg-hover); }
+.list-item.selected { background: var(--bg-card); border-color: var(--border); }
+.list-item.active-running { border-left: 3px solid var(--green); }
+.item-title { font-weight: 500; font-size: 15px; margin-bottom: 4px; line-height: 1.3; word-break: break-all; }
+.item-meta { display: flex; gap: 6px; font-size: 13px; color: var(--text-muted); align-items: center; }
+.badge { background: var(--bg-card); border: 1px solid var(--border); padding: 1px 6px; border-radius: 4px; }
+
+/* Sidebar System Widget */
+.system-widget {
+  padding: 16px 20px;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border);
+}
+.sys-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; color: var(--text-muted); }
+.sys-val { color: var(--text-main); font-variant-numeric: tabular-nums; }
+.progress-bg { width: 100%; height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 12px; overflow: hidden; }
+.progress-fg { height: 100%; background: var(--text-muted); transition: width 0.3s ease; }
+.progress-fg.mem { background: var(--blue); }
+
+/* Main Top Bar */
+.main-header {
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  min-height: 80px;
+}
+.model-info-block h1 { font-size: 24px; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+.model-publisher { font-size: 15px; color: var(--text-muted); }
+.status-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); }
+.status-indicator.running { background: var(--green); }
+.status-indicator.starting { background: var(--orange); }
+
+.action-block { display: flex; align-items: center; gap: 12px; }
+.port-input {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  padding: 6px 12px;
+  border-radius: 6px;
+  width: 80px;
+  font-size: 13px;
+  text-align: center;
+}
+.btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--accent); color: var(--accent-fg); }
+.btn-primary:hover:not(:disabled) { opacity: 0.9; }
+.btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--red); border-color: rgba(239, 68, 68, 0.2); }
+.btn-danger:hover:not(:disabled) { background: rgba(239, 68, 68, 0.2); }
+.btn-ghost { background: transparent; border-color: var(--border); color: var(--text-main); }
+.btn-ghost:hover:not(:disabled) { background: var(--bg-hover); }
+
+/* Main Content Area */
+.content-area {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  overflow: hidden;
+}
+
+/* Chat Section */
+.chat-section {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+}
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.msg { display: flex; gap: 16px; max-width: 800px; margin: 0 auto; width: 100%; }
+.msg-avatar { width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+.msg.user .msg-avatar { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); }
+.msg.assistant .msg-avatar { background: var(--accent); color: var(--accent-fg); }
+.msg-content { flex: 1; font-size: 15px; line-height: 1.6; color: var(--text-main); padding-top: 3px; white-space: pre-wrap; word-break: break-word; }
+
+.chat-input-wrapper {
+  padding: 24px 32px;
+  background: transparent;
+}
+.chat-input-box {
+  max-width: 800px; margin: 0 auto;
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px;
+}
+.chat-input-box:focus-within { border-color: var(--text-muted); }
+.chat-textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 12px 48px 12px 14px;
+  color: var(--text-main);
+  font-size: 15px;
+  font-family: inherit;
+  resize: none;
+  outline: none;
+  max-height: 200px;
+}
+.chat-send-btn {
+  position: absolute; right: 8px; bottom: 8px;
+  width: 32px; height: 32px; border-radius: 6px;
+  background: var(--accent); color: var(--accent-fg);
+  border: none; display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.chat-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Details Section */
+.details-section {
+  padding: 32px;
+  overflow-y: auto;
+  background: transparent;
+}
+.prop-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.prop-item {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.prop-label { font-size: 12px; color: var(--text-muted); }
+.prop-val { font-size: 14px; font-weight: 500; }
+
+.compat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+}
+.compat-hdr { font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.compat-grid { display: grid; gap: 12px; font-size: 13px; }
+.compat-row { display: flex; justify-content: space-between; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.compat-row:last-child { border: none; padding: 0; }
+
+.empty-state {
+  height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: var(--text-dim); text-align: center;
+}
+.empty-state svg { opacity: 0.2; margin-bottom: 16px; }
+
+/* Toast */
+.toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 100; }
+.toast {
+  background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);
+  padding: 12px 16px; border-radius: 6px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  animation: slideIn 0.2s ease-out;
+}
+@keyframes slideIn { from{transform: translateX(20px);opacity:0} to{transform: translateX(0);opacity:1} }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header class="topbar">
+    <div style="font-weight:700; font-size:24px; display:flex; align-items:center; gap:12px; color:#fff">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+      MLX Control Center
+    </div>
+    <div class="topbar-center" id="topActiveInfo">
+      <!-- dynamic content here -->
+    </div>
+    <div class="topbar-right">
+      <span id="topMem" style="color:var(--text-main)">Sistem: —</span>
+      <span id="topCpu" style="font-size:14px; color:var(--text-muted)">CPU Compute: —</span>
+    </div>
+  </header>
+
+  <div class="app-body">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <input type="text" class="search-input" id="searchBox" placeholder="Modelleri ara..." oninput="filterList()">
+        <div class="filter-row" id="filterBar"></div>
+      </div>
+    
+    <div class="sidebar-list" id="modelList">
+      <div style="padding:20px; text-align:center; color:var(--text-dim); font-size:12px;">Yükleniyor...</div>
+    </div>
+
+    <div class="system-widget">
+      <div class="sys-row"><span>Bellek (RAM)</span> <span id="sysMem">—</span></div>
+      <div class="progress-bg"><div class="progress-fg mem" id="sysMemBar" style="width:0%"></div></div>
+      <div class="sys-row"><span>CPU / Compute</span> <span id="sysCpu">—</span></div>
+      <div class="progress-bg"><div class="progress-fg" id="sysCpuBar" style="width:0%"></div></div>
+      <div class="sys-row" style="margin-top:12px; font-size:11px">
+        <span id="diskUsed" style="color:var(--text-dim)">Depolama: —</span>
+        <span id="modelCount" style="color:var(--text-dim)">Modeller: —</span>
+      </div>
+    </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+      <div class="empty-state" id="emptyStateContainer">
+        <!-- Javascript ile doldurulacak -->
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// State
+let models = [];
+let activePath = '';
+let activeStatus = 'stopped';
+let activeProcess = {};
+let selectedData = null;
+let chatHistory = [];
+let filterMode = 'all';
+
+// Constants
+const ICONS = {
+  play: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`,
+  stop: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>`,
+  switch: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>`,
+  send: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`,
+  check: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
+  warn: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`
+};
+
+// API Wrapper
+async function fetchApi(method, endpoint, body) {
+  const req = { method, headers: { 'Content-Type': 'application/json' } };
+  if(body) req.body = JSON.stringify(body);
+  const r = await fetch(endpoint, req);
+  if(!r.ok) {
+    let err = await r.text();
+    try { err = JSON.parse(err).detail || err; } catch(e){}
+    throw new Error(err);
+  }
+  return r.json();
+}
+
+function estimatePerformance(m) {
+  let paramB = 7.0;
+  if (m.param_hint) paramB = parseFloat(m.param_hint.replace(/[^0-9.]/g, '')) || 7.0;
+  
+  let qBits = 8.0;
+  if (m.quant_type === '4bit') qBits = 4.0;
+  else if (m.quant_type === '5bit') qBits = 5.0;
+  else if (m.quant_type === '6bit') qBits = 6.0;
+
+  // Apple M3 Ultra bellek bant yığını (~800 GB/s)
+  let weightGb = paramB * (qBits / 8.0);
+  let activeWeightGb = m.is_moe ? (weightGb * 0.25) : weightGb;
+  let tps = 800 / (activeWeightGb > 0 ? activeWeightGb : 1);
+  let ramNeeded = weightGb * 1.15; // weights + kv cache buffer
+  
+  if (m.format === 'gguf') tps = tps * 0.6; // gguf cpu/mlx farkı (kabaca)
+
+  return { tps: Math.round(tps), ramGb: ramNeeded.toFixed(1) };
+}
+
+// Toast
+function toast(msg) {
+  const c = document.getElementById('toastContainer');
+  const d = document.createElement('div');
+  d.className = 'toast'; d.textContent = msg;
+  c.appendChild(d);
+  setTimeout(() => {
+    d.style.opacity = '0';
+    setTimeout(()=>d.remove(), 200);
+  }, 3000);
+}
+
+// Init
+async function boot() {
+  await fetchModels();
+  renderFilters();
+  connectWS();
+}
+
+async function fetchModels() {
+  try {
+    const res = await fetchApi('GET', '/api/models');
+    models = res.models || [];
+    document.getElementById('modelCount').textContent = `Toplam: ${models.length}`;
+    renderList();
+  } catch(e) { toast(e.message); }
+}
+
+// Sidebar Render
+function renderFilters() {
+  const fb = document.getElementById('filterBar');
+  const html = `
+    <button class="filter-btn active" onclick="setFilter('all', this)">Tümü</button>
+    <button class="filter-btn" onclick="setFilter('mlx', this)">MLX</button>
+    <button class="filter-btn" onclick="setFilter('gguf', this)">GGUF</button>
+    <button class="filter-btn" onclick="setFilter('moe', this)">MoE Modeller</button>
+  `;
+  fb.innerHTML = html;
+}
+function setFilter(f, el) {
+  filterMode = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderList();
+}
+function filterList() { renderList(); }
+
+function renderList() {
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  let list = models.filter(m => m.name.toLowerCase().includes(q) || m.publisher.toLowerCase().includes(q));
+  
+  if(filterMode==='mlx') list = list.filter(m=>m.format==='mlx');
+  if(filterMode==='gguf') list = list.filter(m=>m.format==='gguf');
+  if(filterMode==='moe') list = list.filter(m=>m.is_moe);
+
+  // Performans verisini hesapla ve en hızlıdan yavaşa doğru sırala
+  const enrichedList = list.map(m => {
+    const perf = estimatePerformance(m);
+    return { ...m, perf_tps: perf.tps, perf_ram: perf.ramGb };
+  }).sort((a, b) => b.perf_tps - a.perf_tps);
+
+  const container = document.getElementById('modelList');
+  container.innerHTML = `<div class="sidebar-title">Kütüphane (${enrichedList.length})</div>` + enrichedList.map(m => {
+    const isAct = m.path === activePath;
+    const isSel = selectedData && selectedData.path === m.path;
+    let cls = 'list-item';
+    if(isSel) cls += ' selected';
+    if(isAct) cls += ' active-running';
+    
+    return `
+      <div class="${cls}" onclick="onSelectModel('${m.path.replace(/'/g,"\\'")}')">
+        <div class="item-title">${m.name}</div>
+        <div class="item-meta">
+          <span style="color:var(--text-dim)">${m.publisher}</span>
+          ${m.format ? `<span class="badge" style="text-transform:uppercase">${m.format}</span>` : ''}
+          <span class="badge" style="color:var(--blue)">🧠 RAM: ~${m.perf_ram} GB</span>
+          <span class="badge" style="color:var(--green)">⚡ Hız: ~${m.perf_tps} t/s</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Action
+async function onSelectModel(path) {
+  const m = models.find(x => x.path === path);
+  if(!m) return;
+  
+  document.querySelectorAll('.list-item').forEach(el => el.classList.remove('selected'));
+  renderList(); // Quick update to selected class
+  
+  try {
+    const detail = await fetchApi('GET', '/api/models/detail?path=' + encodeURIComponent(path));
+    selectedData = { model: m, detail };
+    renderMain();
+  } catch(e) { toast(e.message); }
+}
+
+// Main Area Render
+function renderEmptyState() {
+  const container = document.getElementById('mainContent');
+  if (activeStatus === 'running') {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div style="font-size:48px; margin-bottom:16px;">🚀</div>
+        <div style="font-size:24px; font-weight:600; color:var(--text-main); margin-bottom:8px;">${activeProcess.model_name}</div>
+        <div style="color:var(--green); font-size:14px; margin-bottom:32px; display:flex; align-items:center; gap:8px;">
+           <span class="status-indicator running"></span> Sistemde Aktif Olarak Çalışıyor
+        </div>
+        <div style="display:flex; gap:16px;">
+          <button class="btn btn-primary" onclick="onSelectModel('${activePath}')" style="padding:12px 24px; font-size:15px">${ICONS.check} Modele Git (Chat & Test)</button>
+          <button class="btn btn-danger" onclick="doStop()" style="padding:12px 24px; font-size:15px">${ICONS.stop} Modeli Durdur</button>
+        </div>
+      </div>
+    `;
+  } else {
+    container.innerHTML = `
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+        <div style="font-size:16px; margin-top:12px; color:var(--text-main)">Sol menüden bir model seçin</div>
+        <div style="font-size:13px; margin-top:8px">Seçilen modelin detaylarına erişebilir veya çalıştırıp sohbet edebilirsiniz.</div>
+      </div>
+    `;
+  }
+}
+
+function renderMain() {
+  if(!selectedData) {
+    renderEmptyState();
+    return;
+  }
+  const m = selectedData.model;
+  const cfg = selectedData.detail.config || {};
+  
+  const isAct = m.path === activePath;
+  const isRunning = activeStatus === 'running';
+  
+  let actionHtml = '';
+  if (m.format !== 'gguf') {
+    if (isAct) {
+      actionHtml = `<button class="btn btn-danger" onclick="doStop()">${ICONS.stop} Durdur</button>`;
+    } else {
+      actionHtml = `<button class="btn btn-primary" onclick="doStart()">${ICONS.play} Başlat (MLX)</button>`;
+      if (isRunning) {
+        actionHtml += `<button class="btn btn-ghost" onclick="doSwitch()">${ICONS.switch} Geçiş Yap</button>`;
+      }
+    }
+  } else {
+    actionHtml = `<span style="font-size:12px;color:var(--text-dim)">GGUF formatı MLX motoruyla doğrudan çalıştırılamaz.</span>`;
+  }
+
+  const container = document.getElementById('mainContent');
+  container.innerHTML = `
+    <!-- Header -->
+    <header class="main-header">
+      <div class="model-info-block">
+        <h1>
+          ${isAct ? `<span class="status-indicator ${activeStatus}"></span>` : ''}
+          ${m.name}
+        </h1>
+        <div class="model-publisher">${m.publisher} • Modeli Local Dizin: ~.lmstudio/models</div>
+      </div>
+      <div class="action-block">
+        <div style="display:flex; flex-direction:column; gap:4px; max-width:80px">
+          <label style="font-size:10px; color:var(--text-dim); text-transform:uppercase">Proxy Port</label>
+          <input type="number" id="portInp" class="port-input" value="${isAct ? activeProcess.proxy_port || 8087 : 8087}">
+        </div>
+        <div style="width:1px; height:32px; background:var(--border); margin:0 8px"></div>
+        ${actionHtml}
+      </div>
+    </header>
+
+    <div class="content-area">
+      <!-- Left: Chat -->
+      <section class="chat-section">
+        <div class="chat-messages" id="chatArea">
+          ${!isRunning ? 
+            `<div class="empty-state">Model çalışmıyor. İletişim kurmak için MLX server'ı başlatın.</div>` : 
+            chatHistory.map(c => `
+              <div class="msg ${c.role}">
+                <div class="msg-avatar">${c.role === 'user' ? 'U' : 'AI'}</div>
+                <div class="msg-content">${escapeHTMLEncode(c.content)}</div>
+              </div>
+            `).join('')
+          }
+        </div>
+        <div class="chat-input-wrapper">
+          <div class="chat-input-box">
+            <textarea id="chatInput" class="chat-textarea" placeholder="${isRunning ? 'Mesaj yazın (Enter)...' : 'Devre dışı.'}" ${!isRunning?'disabled':''} rows="1" onkeydown="handleEnter(event)"></textarea>
+            <button class="chat-send-btn" onclick="sendChat()" ${!isRunning?'disabled':''}>${ICONS.send}</button>
+          </div>
+          <div style="text-align:center;font-size:11px;color:var(--text-dim);margin-top:12px">
+             Bu arayüz HTTP üzerinden lokal MLX Python köprüsüne (proxy) bağlıdır.
+          </div>
+        </div>
+      </section>
+      
+      <!-- Right: Details & Compat -->
+      <section class="details-section">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+           <div style="font-size:12px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em">Sistem & Mimari</div>
+        </div>
+        
+        <div class="prop-grid">
+          <div class="prop-item"><span class="prop-label">Mimari</span><span class="prop-val">${m.architecture || cfg.model_type || '-'}</span></div>
+          <div class="prop-item"><span class="prop-label">Parametre</span><span class="prop-val">${m.param_hint || '-'}</span></div>
+          <div class="prop-item"><span class="prop-label">Quant Türü</span><span class="prop-val">${m.quant_type || '-'}</span></div>
+          <div class="prop-item"><span class="prop-label">Dosya Boyutu</span><span class="prop-val">${(selectedData.detail.total_size_gb || m.size_gb)} GB</span></div>
+          <div class="prop-item"><span class="prop-label">Max Context</span><span class="prop-val">${cfg.max_position_embeddings || '-'}</span></div>
+          <div class="prop-item"><span class="prop-label">Hidden Size</span><span class="prop-val">${cfg.hidden_size || '-'}</span></div>
+        </div>
+
+        <div id="compatBlock">
+          <div style="color:var(--text-muted); font-size:12px">Donanım uyumluluğu analiz ediliyor...</div>
+        </div>
+      </section>
+    </div>
+  `;
+  
+  if(isRunning) scrollToBot();
+  runCompatCheck(m, cfg);
+}
+
+function handleEnter(e) {
+  if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+}
+
+function scrollToBot() {
+  const el = document.getElementById('chatArea');
+  if(el) el.scrollTop = el.scrollHeight;
+}
+
+function escapeHTMLEncode(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+// Compat Logic
+async function runCompatCheck(m, cfg) {
+  let paramB = m.param_hint ? parseFloat(m.param_hint.replace(/[^0-9.]/g, '')) : 7.0;
+  let qBits = m.quant_type==='4bit'?4: m.quant_type==='5bit'?5: m.quant_type==='6bit'?6: 8;
+  
+  try {
+    const res = await fetchApi('POST', '/api/compatibility', {
+      param_count_billions: paramB || 7.0,
+      quantization_bits: qBits,
+      context_length: cfg.max_position_embeddings || 4096,
+      is_moe: !!m.is_moe,
+      active_experts: parseInt(m.num_experts) || 2
+    });
+    
+    const block = document.getElementById('compatBlock');
+    if(!block) return;
+    
+    const color = res.can_run ? 'var(--green)' : 'var(--red)';
+    const icon = res.can_run ? ICONS.check : ICONS.warn;
+    
+    block.innerHTML = `
+      <div class="compat-card" style="border-left: 3px solid ${color};">
+        <div class="compat-hdr" style="font-size:14px; margin-bottom:8px">
+           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+           Github: Can I Run This LLM?
+        </div>
+        <div style="color:var(--text-dim); font-size:11px; margin-bottom:20px;">
+          (Github Model Donanım Parametre Uyumluluk Testi)
+        </div>
+        <div class="compat-grid">
+          <div class="compat-row"><span style="color:var(--text-muted)">Durum</span> <b style="color:${color}; display:flex; align-items:center; gap:4px">${icon} ${res.can_run ? 'Çalıştırılabilir' : 'RAM Yetersiz'}</b></div>
+          <div class="compat-row"><span style="color:var(--text-muted)">İhtiyaç Duyulan VRAM</span> <span>${res.estimated_vram_gb} GB</span></div>
+          <div class="compat-row"><span style="color:var(--text-muted)">Hız Öngörüsü</span> <span>${res.speed_tier}</span></div>
+          <div class="compat-row"><span style="color:var(--text-muted)">Güvenli Context</span> <span>${res.max_context_fit} Token</span></div>
+        </div>
+        <div style="margin-top:16px; padding-top:12px; border-top:1px solid var(--border); font-size:12px; color:var(--text-muted); line-height:1.5">${res.message}</div>
+      </div>
+    `;
+  } catch(e) {
+    const block = document.getElementById('compatBlock');
+    if(block) block.innerHTML = `<div style="color:var(--red); font-size:12px">Uyumluluk hesaplaması başarısız: ${e.message}</div>`;
+  }
+}
+
+// Operations
+async function doStart() {
+  const p = document.getElementById('portInp').value;
+  toast('Süreç başlatılıyor...');
+  try {
+    await fetchApi('POST', '/api/start', { model_path: selectedData.model.path, port: parseInt(p) });
+    chatHistory = [];
+  } catch(e) { toast('Hata: ' + e.message); }
+}
+
+async function doStop() {
+  toast('Sonlandırılıyor...');
+  try {
+    await fetchApi('POST', '/api/stop');
+    chatHistory = [];
+    if (!selectedData) renderEmptyState(); // re-render center safely if no selection
+  } catch(e) { toast('Hata: ' + e.message); }
+}
+
+async function doSwitch() {
+  const p = document.getElementById('portInp').value;
+  toast('Bellek aktarılıyor...');
+  try {
+    await fetchApi('POST', '/api/switch', { model_path: selectedData.model.path, port: parseInt(p) });
+    chatHistory = [];
+  } catch(e) { toast('Hata: ' + e.message); }
+}
+
+async function sendChat() {
+  const inp = document.getElementById('chatInput');
+  const txt = inp.value.trim();
+  if(!txt || activeStatus !== 'running') return;
+  
+  inp.value = '';
+  chatHistory.push({ role: 'user', content: txt });
+  renderMain();
+  
+  try {
+    const res = await fetchApi('POST', '/api/chat', {
+      messages: chatHistory,
+      max_tokens: 2048,
+      temperature: 0.7
+    });
+    chatHistory.push({ role: 'assistant', content: res.choices[0].message.content });
+  } catch(e) {
+    chatHistory.push({ role: 'assistant', content: `[SYSTEM ERROR] ${e.message}` });
+  }
+  renderMain();
+}
+
+// Websocket
+function connectWS() {
+  const ws = new WebSocket(`${location.protocol==='https:'?'wss':'ws'}://${location.host}/ws/status`);
+  ws.onmessage = e => {
+    const d = JSON.parse(e.data);
+    
+    // System Bars
+    const memPct = d.system.memory_percent || 0;
+    const cpuPct = d.system.cpu_percent || 0;
+    document.getElementById('sysMem').textContent = memPct + '%';
+    document.getElementById('sysCpu').textContent = cpuPct + '%';
+    document.getElementById('sysMemBar').style.width = memPct + '%';
+    document.getElementById('sysCpuBar').style.width = Math.min(cpuPct, 100) + '%';
+    document.getElementById('diskUsed').textContent = `Depolama: ${d.system.models_disk_used_gb || 0} GB`;
+    
+    // Process Status
+    const pStatus = activeStatus;
+    const pPath = activePath;
+    
+    activePath = d.active.model_path || '';
+    activeStatus = d.active.status || 'stopped';
+    activeProcess = d.active;
+    
+    // Topbar update
+    const tIcon = activeStatus === 'running' ? 'status-indicator running' : (activeStatus==='starting' ? 'status-indicator starting' : 'status-indicator');
+    const tName = activeStatus === 'running' ? d.active.model_name : (activeStatus==='starting' ? 'Sistem Hazırlanıyor...' : 'Aktif Model Yok');
+    
+    let subTxt = 'Derin Öğrenme Motoru Boşta';
+    if(activeStatus === 'running' && d.system.mlx_process_memory_gb) {
+        subTxt = `🧠 Model RAM Ayak İzi: <span style="color:var(--accent); font-weight:600; font-size:16px">${d.system.mlx_process_memory_gb} GB</span> Ayrıldı`;
+    }
+    document.getElementById('topActiveInfo').innerHTML = `
+      <div style="display:flex; align-items:center; gap:12px; color:${activeStatus === 'running' ? '#fff' : 'var(--text-dim)'}">
+         <span class="${tIcon}" style="width:12px; height:12px; box-shadow:0 0 10px var(--green)"></span> ${tName}
+      </div>
+      <div style="font-size:15px; font-weight:500; color:var(--text-muted); opacity:0.9">${subTxt}</div>
+    `;
+
+    document.getElementById('topMem').textContent = memPct + '% Toplam RAM';
+    document.getElementById('topCpu').textContent = 'CPU Yükü: ' + cpuPct + '%';
+    
+    // Re-render if state changed
+    if(pStatus !== activeStatus || pPath !== activePath) {
+      renderList();
+      if(selectedData) renderMain();
+      else renderEmptyState();
+    }
+  };
+  ws.onclose = () => setTimeout(connectWS, 3000);
+}
+
+boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+INFO:     Started server process [12839]
+INFO:     Waiting for application startup.
+2026-04-15 00:07:11,353 [INFO] backend.main: MLX Dashboard başlatılıyor...
+2026-04-15 00:07:11,365 [INFO] backend.model_scanner: Toplam 35 model bulundu.
+2026-04-15 00:07:11,365 [INFO] backend.main: Model taraması tamamlandı: 35 model
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8070 (Press CTRL+C to quit)
+INFO:     127.0.0.1:55402 - "WebSocket /ws/status" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:55413 - "GET / HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     127.0.0.1:55413 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55422 - "WebSocket /ws/status" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:55413 - "GET / HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     127.0.0.1:55413 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55424 - "WebSocket /ws/status" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:55464 - "GET / HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     127.0.0.1:55464 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55466 - "WebSocket /ws/status" [accepted]
+INFO:     connection open
+2026-04-15 00:08:19,621 [INFO] backend.model_scanner: Toplam 35 model bulundu.
+INFO:     127.0.0.1:55468 - "POST /api/models/rescan HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55468 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55542 - "GET / HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     127.0.0.1:55542 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55546 - "WebSocket /ws/status" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:55542 - "GET /api/models/detail?path=%2FUsers%2Ferdinc%2F.lmstudio%2Fmodels%2FJackrong%2FMLX-Qwen3.5-35B-A3B-Claude-4.6-Opus-Reasoning-Distilled-8bit HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55542 - "POST /api/compatibility HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55542 - "GET /api/models/detail?path=%2FUsers%2Ferdinc%2F.lmstudio%2Fmodels%2Fbaa-ai%2FGLM-5.1-RAM-270GB-MLX HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55542 - "POST /api/compatibility HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55542 - "GET /api/models/detail?path=%2FUsers%2Ferdinc%2F.lmstudio%2Fmodels%2Finferencerlabs%2FGLM-5.1-MLX-4.8bit HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55542 - "POST /api/compatibility HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55556 - "POST /api/compatibility HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55575 - "GET /api/models/detail?path=%2FUsers%2Ferdinc%2F.lmstudio%2Fmodels%2FJackrong%2FMLX-Qwen3.5-35B-A3B-Claude-4.6-Opus-Reasoning-Distilled-8bit HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55575 - "POST /api/compatibility HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55575 - "GET /api/models/detail?path=%2FUsers%2Ferdinc%2F.lmstudio%2Fmodels%2Fbaa-ai%2FGLM-5.1-RAM-270GB-MLX HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55575 - "POST /api/compatibility HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55605 - "GET / HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     127.0.0.1:55605 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55673 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55673 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55675 - "WebSocket /ws/status" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:55673 - "GET /api/models/detail?path=%2FUsers%2Ferdinc%2F.lmstudio%2Fmodels%2FJackrong%2FMLX-Qwen3.5-35B-A3B-Claude-4.6-Opus-Reasoning-Distilled-8bit HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55673 - "POST /api/compatibility HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55742 - "GET / HTTP/1.1" 200 OK
+INFO:     connection closed
+2026-04-15 00:13:41,360 [INFO] backend.model_scanner: Toplam 35 model bulundu.
+INFO:     127.0.0.1:55742 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55744 - "WebSocket /ws/status" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:55787 - "GET / HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     127.0.0.1:55787 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55790 - "WebSocket /ws/status" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:55787 - "GET / HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     127.0.0.1:55787 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55800 - "WebSocket /ws/status" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:55803 - "GET /api/models/detail?path=%2FUsers%2Ferdinc%2F.lmstudio%2Fmodels%2Flmstudio-community%2FQwen3-Coder-Next-MLX-8bit HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55803 - "POST /api/compatibility HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55919 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55919 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     127.0.0.1:55921 - "WebSocket /ws/status" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:55967 - "GET / HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     127.0.0.1:55967 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55969 - "WebSocket /ws/status" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:56063 - "GET / HTTP/1.1" 200 OK
+INFO:     connection closed
+2026-04-15 00:18:44,244 [INFO] backend.model_scanner: Toplam 35 model bulundu.
+INFO:     127.0.0.1:56063 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56068 - "WebSocket /ws/status" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:56090 - "GET /api/models/detail?path=%2FUsers%2Ferdinc%2F.lmstudio%2Fmodels%2Flmstudio-community%2FQwen3-Coder-Next-MLX-8bit HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56090 - "POST /api/compatibility HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56102 - "GET /api/models/detail?path=%2FUsers%2Ferdinc%2F.lmstudio%2Fmodels%2Flmstudio-community%2FQwen3-Coder-Next-MLX-4bit HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56102 - "POST /api/compatibility HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56207 - "GET / HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     127.0.0.1:56207 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56209 - "WebSocket /ws/status" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:56218 - "GET /api/models/detail?path=%2FUsers%2Ferdinc%2F.lmstudio%2Fmodels%2Flmstudio-community%2FQwen3-Coder-Next-MLX-8bit HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56218 - "POST /api/compatibility HTTP/1.1" 200 OK
