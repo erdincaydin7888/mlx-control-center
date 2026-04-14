@@ -106,6 +106,26 @@ html, body {
   padding: 20px;
   border-bottom: 1px solid var(--border);
 }
+.scan-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 14px;
+  font-size: 16px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(34, 211, 238, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.scan-btn:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(34, 211, 238, 0.3); }
+
 .search-input {
   width: 100%;
   background: var(--bg-card);
@@ -358,6 +378,10 @@ html, body {
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
+        <button class="scan-btn" onclick="doRescan()">
+           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M2.13 15.57a10 10 0 1 0 3.3-8.83L2 9"></path></svg>
+           Yeni Modelleri Tara
+        </button>
         <input type="text" class="search-input" id="searchBox" placeholder="Modelleri ara..." oninput="filterList()">
         <div class="filter-row" id="filterBar"></div>
       </div>
@@ -459,6 +483,15 @@ async function boot() {
   await fetchModels();
   renderFilters();
   connectWS();
+}
+
+async function doRescan() {
+  toast('Disk taranıyor...');
+  try {
+    const res = await fetchApi('POST', '/api/models/rescan');
+    await fetchModels();
+    toast(`Tarama tamamlandı! ${res.count} model algılandı.`);
+  } catch(e) { toast('Hata: ' + e.message); }
 }
 
 async function fetchModels() {
@@ -575,6 +608,7 @@ function renderMain() {
   }
   const m = selectedData.model;
   const cfg = selectedData.detail.config || {};
+  let defaultTokens = cfg.max_position_embeddings || 8192;
   
   const isAct = m.path === activePath;
   const isRunning = activeStatus === 'running';
@@ -605,6 +639,10 @@ function renderMain() {
         <div class="model-publisher">${m.publisher} • Modeli Local Dizin: ~.lmstudio/models</div>
       </div>
       <div class="action-block">
+        <div style="display:flex; flex-direction:column; gap:4px; max-width:90px">
+          <label style="font-size:10px; color:var(--text-dim); text-transform:uppercase">Max Tokens</label>
+          <input type="number" id="maxTokensInp" class="port-input" style="width:100%" value="${defaultTokens}">
+        </div>
         <div style="display:flex; flex-direction:column; gap:4px; max-width:80px">
           <label style="font-size:10px; color:var(--text-dim); text-transform:uppercase">Proxy Port</label>
           <input type="number" id="portInp" class="port-input" value="${isAct ? activeProcess.proxy_port || 8087 : 8087}">
@@ -757,6 +795,9 @@ async function sendChat() {
   const txt = inp.value.trim();
   if(!txt || activeStatus !== 'running') return;
   
+  const tokenNode = document.getElementById('maxTokensInp');
+  const tokensToGenerate = tokenNode ? parseInt(tokenNode.value) || 8192 : 8192;
+  
   inp.value = '';
   chatHistory.push({ role: 'user', content: txt });
   renderMain();
@@ -764,7 +805,7 @@ async function sendChat() {
   try {
     const res = await fetchApi('POST', '/api/chat', {
       messages: chatHistory,
-      max_tokens: 2048,
+      max_tokens: tokensToGenerate,
       temperature: 0.7
     });
     chatHistory.push({ role: 'assistant', content: res.choices[0].message.content });
