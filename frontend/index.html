@@ -194,24 +194,21 @@ html, body {
 .item-meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 15px; color: var(--text-muted); align-items: center; } /* BUYUK FONT */
 .badge { background: var(--bg-card); border: 1px solid var(--border); padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
 
-/* Sidebar System Widget -> Absolute Bottom Right Widget */
+/* Topbar System Stats */
 .system-widget {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 380px;
-  padding: 20px 24px;
-  background: var(--bg-panel);
-  backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-  border-top-left-radius: 16px;
-  z-index: 50;
-  box-shadow: -4px -4px 24px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px 16px;
+  border-radius: 12px;
+  margin-left: 12px;
 }
-.sys-row { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 8px; color: var(--text-muted); }
-.sys-val { color: var(--text-main); font-variant-numeric: tabular-nums; }
-.progress-bg { width: 100%; height: 6px; background: var(--border); border-radius: 3px; margin-bottom: 16px; overflow: hidden; }
+.sys-group { display: flex; flex-direction: column; gap: 2px; min-width: 100px; }
+.sys-row { display: flex; justify-content: space-between; font-size: 12px; font-weight: 500; color: var(--text-muted); }
+.sys-val { color: var(--text-main); font-variant-numeric: tabular-nums; font-weight: 600; }
+.progress-bg { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
 .progress-fg { height: 100%; background: var(--text-muted); transition: width 0.3s ease; }
 .progress-fg.mem { background: var(--blue); }
 
@@ -560,21 +557,36 @@ html, body {
 
 <div id="app">
   <header class="topbar">
-    <div style="font-weight:700; font-size:24px; display:flex; align-items:center; gap:12px; color:#fff">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
-      MLX Control Center
+    <div style="display:flex; align-items:center;">
+      <div style="font-weight:800; font-size:24px; display:flex; align-items:center; gap:12px; color:#fff; white-space:nowrap; letter-spacing:-0.02em">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--accent)"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+        MLX Control Center
+      </div>
+
+      <div class="system-widget">
+        <div class="sys-group">
+          <div class="sys-row"><span>RAM</span> <span id="sysMem" class="sys-val">—</span></div>
+          <div class="progress-bg"><div class="progress-fg mem" id="sysMemBar" style="width:0%"></div></div>
+        </div>
+        <div class="sys-group">
+          <div class="sys-row"><span>CPU</span> <span id="sysCpu" class="sys-val">—</span></div>
+          <div class="progress-bg"><div class="progress-fg" id="sysCpuBar" style="width:0%"></div></div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:2px; font-size:11px; color:var(--text-dim); font-weight:600; min-width:110px">
+          <span id="diskUsed">Disk: —</span>
+          <span id="modelCount">Models: —</span>
+        </div>
+      </div>
     </div>
+
     <div class="topbar-center" id="topActiveInfo">
       <!-- dynamic content here -->
     </div>
-    <div class="topbar-right" style="flex-direction:row; align-items:center; gap:24px;">
+
+    <div class="topbar-right">
       <div id="topButtons" style="display:flex; gap:12px;">
         <button class="filter-btn" onclick="showDownloadModal()">⬇️ Model İndir</button>
         <button class="filter-btn" style="padding:4px 10px;" onclick="showSettingsModal()">⚙️ Ayarlar</button>
-      </div>
-      <div style="display:flex; flex-direction:column; text-align:right;">
-        <span id="topMem" style="color:var(--text-main)">Sistem: —</span>
-        <span id="topCpu" style="font-size:14px; color:var(--text-muted)">CPU Compute: —</span>
       </div>
     </div>
   </header>
@@ -602,17 +614,6 @@ html, body {
         <!-- Javascript ile doldurulacak -->
       </div>
     </main>
-    
-    <div class="system-widget">
-      <div class="sys-row"><span style="font-weight:600">Sistem Belleği (RAM)</span> <span id="sysMem" style="color:var(--blue)">—</span></div>
-      <div class="progress-bg" style="height:6px"><div class="progress-fg mem" id="sysMemBar" style="width:0%"></div></div>
-      <div class="sys-row" style="margin-top:16px"><span style="font-weight:600">Merkezi İşlemci (CPU)</span> <span id="sysCpu">—</span></div>
-      <div class="progress-bg" style="height:6px"><div class="progress-fg" id="sysCpuBar" style="width:0%"></div></div>
-      <div class="sys-row" style="margin-top:20px; font-size:13px; font-weight:500">
-        <span id="diskUsed" style="color:var(--text-dim)">Depolama: —</span>
-        <span id="modelCount" style="color:var(--text-dim)">Modeller: —</span>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -1383,9 +1384,6 @@ function connectWS() {
       <div style="font-size:15px; font-weight:500; color:var(--text-muted); opacity:0.9">${subTxt}</div>
     `;
 
-    document.getElementById('topMem').textContent = memPct + '% Toplam RAM';
-    document.getElementById('topCpu').textContent = 'CPU Yükü: ' + cpuPct + '%';
-    
     // Re-render if state changed
     if(pStatus !== activeStatus || pPath !== activePath) {
       renderList();
