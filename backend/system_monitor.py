@@ -117,7 +117,8 @@ def get_system_stats(mlx_pid: int | None = None) -> SystemStats:
 
     # Model dizini disk kullanımı (hızlı hesaplama yerine cache'lenebilir)
     try:
-        model_dir = os.path.expanduser("~/.lmstudio/models")
+        from .config import MODELS_BASE_DIR
+        model_dir = str(MODELS_BASE_DIR)
         result = subprocess.run(
             ["du", "-s", "-k", model_dir],
             capture_output=True, text=True, timeout=10,
