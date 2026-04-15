@@ -11,8 +11,10 @@ import re
 import signal
 import subprocess
 import time
+import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 from .config import MLX_SERVER_SCRIPT, MLX_PROXY_SCRIPT, PYTHON_BIN, DEFAULT_PROXY_PORT
 
@@ -172,7 +174,7 @@ def stop_model() -> bool:
     return stopped_any
 
 
-def start_model(model_path: str, proxy_port: int = DEFAULT_PROXY_PORT, adapter_path: str | None = None) -> ProcessInfo:
+def start_model(model_path: str, proxy_port: int = DEFAULT_PROXY_PORT, adapter_path: Optional[str] = None) -> ProcessInfo:
     """Modeli başlat. Önce mevcut aktif modeli durdurur."""
     global _active, _server_proc, _proxy_proc
 
@@ -256,7 +258,7 @@ def start_model(model_path: str, proxy_port: int = DEFAULT_PROXY_PORT, adapter_p
         raise
 
 
-def switch_model(model_path: str, proxy_port: int = DEFAULT_PROXY_PORT, adapter_path: str | None = None) -> ProcessInfo:
+def switch_model(model_path: str, proxy_port: int = DEFAULT_PROXY_PORT, adapter_path: Optional[str] = None) -> ProcessInfo:
     """Aktif modeli değiştir (stop → start)."""
     logger.info("Model değiştiriliyor: %s", Path(model_path).name)
     return start_model(model_path, proxy_port, adapter_path)

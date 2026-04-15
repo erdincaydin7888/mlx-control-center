@@ -12,7 +12,7 @@ import logging
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import httpx
 import shutil
@@ -83,7 +83,7 @@ FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 class StartRequest(BaseModel):
     model_path: str
     port: int = DEFAULT_PROXY_PORT
-    adapter_path: str | None = None
+    adapter_path: Optional[str] = None
 
 class RenameRequest(BaseModel):
     old_path: str
