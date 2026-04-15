@@ -386,6 +386,153 @@ html, body {
 .model-menu-btn { padding:4px; margin:-4px; cursor:pointer; border-radius:4px; opacity:0; transition:opacity 0.2s; }
 .list-item:hover .model-menu-btn { opacity:1; }
 .model-menu-btn:hover { background:var(--bg-hover); }
+
+/* --- AI Prompt Box V2 --- */
+.prompt-input-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: #1F2023;
+  border: 1px solid #444444;
+  border-radius: 24px;
+  padding: 8px 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  transition: all 0.3s ease;
+  position: relative;
+}
+.prompt-input-container:focus-within {
+  border-color: #555555;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+}
+.prompt-input-container.recording {
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.prompt-textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  color: #f5f5f5;
+  font-size: 17px;
+  font-family: inherit;
+  resize: none;
+  outline: none;
+  min-height: 44px;
+  max-height: 240px;
+  line-height: 1.5;
+}
+.prompt-textarea::placeholder { color: #6b7280; }
+
+.prompt-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.prompt-btn {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  padding: 6px;
+  border-radius: 9999px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.prompt-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #d1d5db;
+}
+.prompt-btn svg { width: 20px; height: 20px; }
+
+.toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+}
+.toggle-btn:hover { color: #d1d5db; }
+.toggle-btn.active.search { background: rgba(30, 174, 219, 0.15); border-color: #1EAEDB; color: #1EAEDB; }
+.toggle-btn.active.think { background: rgba(139, 92, 246, 0.15); border-color: #8B5CF6; color: #8B5CF6; }
+.toggle-btn.active.canvas { background: rgba(249, 115, 22, 0.15); border-color: #F97316; color: #F97316; }
+
+.divider-glow {
+  height: 20px;
+  width: 1px;
+  background: #333;
+  margin: 0 4px;
+}
+
+.send-btn-v2 {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #9ca3af;
+}
+.send-btn-v2.has-content {
+  background: #ffffff;
+  color: #1f2023;
+}
+.send-btn-v2.has-content:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+.send-btn-v2:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.file-preview-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.preview-item {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #444;
+}
+.preview-item img { width: 100%; height: 100%; object-fit: cover; }
+.preview-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: rgba(0,0,0,0.7);
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 10px;
+  cursor: pointer;
+}
 </style>
 </head>
 <body>
@@ -507,6 +654,11 @@ let filterMode = 'all';
 let attachedImageBase64 = null;
 let ctxSelectedPath = '';
 
+// Modern UI State
+let showSearch = false;
+let showThink = false;
+let showCanvas = false;
+
 // Constants
 const ICONS = {
   play: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`,
@@ -514,7 +666,14 @@ const ICONS = {
   switch: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>`,
   send: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`,
   check: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
-  warn: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`
+  warn: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
+  globe: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+  brain: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.54Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.54Z"/></svg>`,
+  code: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>`,
+  clip: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>`,
+  up: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>`,
+  mic: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`,
+  square_stop: `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>`
 };
 
 // API Wrapper
@@ -776,19 +935,51 @@ function renderMain() {
           }
         </div>
         <div class="chat-input-wrapper">
-          <div class="chat-input-box" style="display:flex; align-items:center; gap:8px;">
-            <label class="chat-btn filter-btn" style="padding:10px; cursor:pointer;" title="Görsel Ekle (Vision)">
-              📎<input type="file" id="chatImageUpload" accept="image/*" style="display:none;" onchange="handleImage(event)" ${!isRunning?'disabled':''}>
-            </label>
-            <textarea id="chatInput" class="chat-textarea" placeholder="${isRunning ? 'Mesaj yazın (Enter)...' : 'Devre dışı.'}" ${!isRunning?'disabled':''} rows="1" onkeydown="handleEnter(event)" style="flex:1"></textarea>
-            <button class="chat-send-btn" onclick="sendChat()" ${!isRunning?'disabled':''}>${ICONS.send}</button>
+          <div id="aiPromptBox" class="prompt-input-container ${!isRunning ? 'disabled' : ''}">
+            <!-- File Previews -->
+            <div id="filePreviewStrip" class="file-preview-strip" style="display:none"></div>
+
+            <!-- Textarea -->
+            <textarea id="chatInput" class="prompt-textarea" 
+              placeholder="${isRunning ? 'Mesaj yazın (Enter)...' : 'Modeli başlatın.'}" 
+              ${!isRunning ? 'disabled' : ''} 
+              oninput="autoResize(this)"
+              onkeydown="handleEnter(event)"></textarea>
+
+            <!-- Actions Row -->
+            <div class="prompt-actions">
+              <div class="action-group">
+                <!-- Upload -->
+                <button class="prompt-btn" onclick="document.getElementById('chatImageUpload').click()" title="Görsel Yükle" ${!isRunning ? 'disabled' : ''}>
+                  ${ICONS.clip}
+                  <input type="file" id="chatImageUpload" accept="image/*" style="display:none" onchange="handleImage(event)">
+                </button>
+
+                <div class="divider-glow"></div>
+
+                <!-- Toggles -->
+                <button id="toggleSearch" class="toggle-btn" onclick="toggleMode('search')" title="Web Araması">
+                  ${ICONS.globe} <span class="lbl">Search</span>
+                </button>
+                <button id="toggleThink" class="toggle-btn" onclick="toggleMode('think')" title="Derin Düşünme">
+                  ${ICONS.brain} <span class="lbl">Think</span>
+                </button>
+                <button id="toggleCanvas" class="toggle-btn" onclick="toggleMode('canvas')" title="Canvas Modu">
+                  ${ICONS.code} <span class="lbl">Canvas</span>
+                </button>
+              </div>
+
+              <!-- Right Actions (Send/Voice) -->
+              <div class="action-group">
+                <button id="sendBtn" class="send-btn-v2" onclick="sendChat()" title="Gönder" ${!isRunning ? 'disabled' : ''}>
+                  ${ICONS.up}
+                </button>
+              </div>
+            </div>
           </div>
-          <div id="imgPreviewWrapper" style="display:none; margin-top:8px; align-items:center; gap:8px;">
-             <img id="imgPreview" src="" style="width:40px;height:40px;object-fit:cover;border-radius:4px;border:1px solid var(--border)">
-             <button class="filter-btn" style="color:var(--red);font-size:12px;padding:2px 6px" onclick="clearImage()">Sil</button>
-          </div>
-          <div style="text-align:center;font-size:14px;color:var(--text-dim);margin-top:16px">
-             Bu arayüz HTTP üzerinden lokal MLX Python köprüsüne (proxy) bağlıdır.
+          
+          <div style="text-align:center;font-size:13px;color:rgba(255,255,255,0.2);margin-top:16px; font-weight:500;">
+             MLX Control Center — Built with ❤️ for Apple Silicon
           </div>
         </div>
       </section>
@@ -914,15 +1105,73 @@ function handleImage(e) {
   const reader = new FileReader();
   reader.onload = (re) => {
     attachedImageBase64 = re.target.result;
-    document.getElementById('imgPreview').src = attachedImageBase64;
-    document.getElementById('imgPreviewWrapper').style.display = 'flex';
+    const strip = document.getElementById('filePreviewStrip');
+    strip.innerHTML = `
+      <div class="preview-item">
+        <img src="${attachedImageBase64}">
+        <div class="preview-remove" onclick="clearImage()">✕</div>
+      </div>
+    `;
+    strip.style.display = 'flex';
+    updateSendBtnState();
   };
   reader.readAsDataURL(file);
 }
 function clearImage() {
   attachedImageBase64 = null;
-  document.getElementById('imgPreviewWrapper').style.display = 'none';
+  document.getElementById('filePreviewStrip').style.display = 'none';
+  document.getElementById('filePreviewStrip').innerHTML = '';
   document.getElementById('chatImageUpload').value = '';
+  updateSendBtnState();
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+  updateSendBtnState();
+}
+
+function updateSendBtnState() {
+  const inp = document.getElementById('chatInput');
+  const btn = document.getElementById('sendBtn');
+  if(!inp || !btn) return;
+  const hasContent = inp.value.trim().length > 0 || attachedImageBase64 !== null;
+  if(hasContent) btn.classList.add('has-content');
+  else btn.classList.remove('has-content');
+}
+
+function toggleMode(mode) {
+  if (mode === 'search') {
+    showSearch = !showSearch;
+    showThink = false;
+    showCanvas = false;
+  } else if (mode === 'think') {
+    showThink = !showThink;
+    showSearch = false;
+    showCanvas = false;
+  } else if (mode === 'canvas') {
+    showCanvas = !showCanvas;
+    showSearch = false;
+    showThink = false;
+  }
+  
+  updateToggleUI();
+}
+
+function updateToggleUI() {
+  const btnSearch = document.getElementById('toggleSearch');
+  const btnThink = document.getElementById('toggleThink');
+  const btnCanvas = document.getElementById('toggleCanvas');
+  const inp = document.getElementById('chatInput');
+  
+  if(showSearch) btnSearch.classList.add('active', 'search'); else btnSearch.classList.remove('active', 'search');
+  if(showThink) btnThink.classList.add('active', 'think'); else btnThink.classList.remove('active', 'think');
+  if(showCanvas) btnCanvas.classList.add('active', 'canvas'); else btnCanvas.classList.remove('active', 'canvas');
+  
+  if(showSearch) inp.placeholder = "🔍 Web'de ara...";
+  else if(showThink) inp.placeholder = "🧠 Derin düşünme modunda sor...";
+  else if(showCanvas) inp.placeholder = "🎨 Canvas modunda oluştur...";
+  else inp.placeholder = "Mesaj yazın (Enter)...";
 }
 
 // Context Menu
@@ -1005,19 +1254,38 @@ async function sendChat() {
   const sysPrompt = localStorage.getItem('sys') || "Sen yardımcı bir asistan programcısın. Formatı koru.";
   
   inp.value = '';
+  inp.style.height = 'auto';
+  updateSendBtnState();
   
-  let msgContent = txt;
+  // Tagging system based on active mode
+  let tag = "";
+  if(showSearch) tag = "[Search] ";
+  else if(showThink) tag = "[Think] ";
+  else if(showCanvas) tag = "[Canvas] ";
+
+  let displayTxt = tag + txt;
+  let apiTxt = txt;
+  if(tag) apiTxt = tag + txt; // Mode tags usually go into the prompt context for local hacks
+  
+  let msgContent = apiTxt;
   if(attachedImageBase64) {
     msgContent = [
-       { type: "text", text: txt },
+       { type: "text", text: apiTxt },
        { type: "image_url", image_url: { url: attachedImageBase64 } }
     ];
   }
   
-  chatHistory.push({ role: 'user', content: txt || '[Görsel Eklendi]' });
+  chatHistory.push({ role: 'user', content: displayTxt || '[Görsel Eklendi]' });
   
   let apicast = [];
-  if(chatHistory.length === 1 && sysPrompt) apicast.push({ role: 'system', content: sysPrompt });
+  // Use history
+  chatHistory.forEach((m, idx) => {
+    if(idx === 0 && sysPrompt) apicast.push({ role: 'system', content: sysPrompt });
+    // We only send the last message for simplicity in this demo, but we could send full history
+  });
+  
+  // Real logic: send full conversation history
+  // However, for this MLX bridge, let's just send the current one formatted
   apicast.push({ role: 'user', content: msgContent });
   
   renderMain();
