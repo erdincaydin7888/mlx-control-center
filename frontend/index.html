@@ -1360,7 +1360,7 @@ function connectWS() {
       <div style="display:flex; align-items:center; gap:12px; color:${activeStatus === 'running' ? '#fff' : 'var(--text-dim)'}">
          <span class="${tIcon}" style="width:12px; height:12px; box-shadow:0 0 10px var(--green)"></span> 
          ${tName}
-         ${activeStatus === 'running' ? `<div class="topbar-close-btn" onclick="doStop()" title="Modeli Kapat">✕</div>` : ''}
+         ${activeStatus === 'running' ? `<div class="topbar-close-btn" onclick="doStop()" title="Modeli Durdur">${ICONS.square_stop}</div>` : ''}
       </div>
       <div style="font-size:15px; font-weight:500; color:var(--text-muted); opacity:0.9">${subTxt}</div>
     `;
