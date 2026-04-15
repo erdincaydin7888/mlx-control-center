@@ -5,12 +5,11 @@ A modern, fast, and feature-rich React/HTML Dashboard to control and manage Appl
 ## Features
 
 * **Visual Model Scanner:** Automatically scans `~/.lmstudio/models` (or your configured path) for any `.safetensors`, `.gguf`, etc. format files.
-* **Intelligent HW Checker:** Evaluates memory limits and model parameter size (quantization) to check if the model fits Apple Silicon. Now uses accurate disk-size measurements.
-* **Core MLX Scripts Attached:** Comes out of the box with the core MLX Proxy and patched Server. You do *not* need to rely on external MLX repos.
+* **Intelligent HW Checker:** Evaluates memory limits and model parameter size (quantization) to check if the model fits. Features an optimized VRAM estimation logic for high-context models.
+* **Consolidated Automation Tools:** Now includes a full suite of automation scripts (`automation/`) and benchmarking tools (`tools/`) directly in the repository.
+* **Integrated HW Monitor:** Displays system RAM and CPU compute metrics in real time, now elegantly integrated into the top-left header.
+* **Modern AI Prompt Box:** High-fidelity glassmorphic chat interface with Search, Think, Canvas modes, and Voice/Image support.
 * **Instant Start & Switch:** Launch or swap MLX models instantly without typing terminal commands. 
-* **Real-time Metrics:** Displays system RAM and CPU compute metrics in real time.
-* **Modern AI Prompt Box:** High-fidelity glassmorphic chat interface with Search, Think, and Canvas modes.
-* **Image/Vision Support:** Upload and process images directly within the chat interface.
 * **Lightweight:** Uses raw HTML/JS for frontend and FastAPI for backend, no `node_modules` overhead.
 
 ---
@@ -21,14 +20,13 @@ Apple Silicon MLX tabanlı Doğal Dil İşleme (LLM) modellerini HTTP Proxy üze
 
 ## Özellikler
 
-* **Görsel Model Tarayıcı:** Yapılandırılmış veya standart `~/.lmstudio/models` dizinindeki modelleri (Örn: `.safetensors`, `.gguf`) otomatik bulur.
-* **Akıllı Donanım Testi:** Model parametreleri ve bit formatına göre (quantization) Mac belleğine sığıp sığmayacağını size önden söyler. Artık disk boyutunu baz alan hassas hesaplama yapar.
-* **Dahili MLX Betikleri:** Gelişmiş MLX API proxy ve sunucu betikleri projenin içindedir, dış bağımlılıklara ihtiyaç duymaz.
+* **Görsel Model Tarayıcı:** Yapılandırılmış veya standart dizinlerdeki modelleri otomatik bulur.
+* **Akıllı Donanım Testi:** Model parametreleri ve bit formatına göre Mac belleğine uyumluluğu ölçer. Yüksek context'li modeller için optimize edilmiş VRAM tahminleme mantığına sahiptir.
+* **Konsolide Araç Seti:** Tüm otomasyon betikleri (`automation/`) ve benchmark araçları (`tools/`) artık tek bir çatı altında deponun içindedir.
+* **Entegre Sistem İzleme:** Sistem RAM ve CPU durumlarını canlı olarak doğrudan başlık alanında (sol üst) gösterir.
+* **Modern AI Mesaj Kutusu:** Search, Think, Canvas modları ile Sesli/Görsel girdi desteği barındıran premium sohbet arayüzü.
 * **Hızlı Başlat ve Değiştir:** Modelleri konsola kod yazmadan hemen aktif edebilir veya anında değiştirebilirsiniz.
-* **Canlı Metrikler:** Sisteminizin o anki RAM ve CPU durumlarını canlı olarak grafiklerle gösterir.
-* **Modern AI Mesaj Kutusu:** Search, Think ve Canvas modlarını barındıran, yüksek kaliteli glassmorphic sohbet arayüzü.
-* **Görsel/Vision Desteği:** Görsel yükleme ve işleme özellikleri doğrudan sohbet içine entegre edildi.
-* **Hafif Çekirdek:** Sadece FastAPI (Python) ve saf HTML+Javascript kullanır, Node.js veya kompleks derleme süreçleri barındırmaz.
+* **Hafif Çekirdek:** FastAPI ve saf HTML+Javascript kullanır, derleme süreci barındırmaz.
 
 ## 🚀 Quick Start / Hızlı Başlangıç
 
