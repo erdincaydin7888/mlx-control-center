@@ -365,6 +365,24 @@ html, body {
   animation: slideIn 0.2s ease-out;
 }
 @keyframes slideIn { from{transform: translateX(20px);opacity:0} to{transform: translateX(0);opacity:1} }
+
+/* --- V2 Features CSS --- */
+.modal-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); backdrop-filter:blur(5px); z-index:1000; display:none; justify-content:center; align-items:center; }
+.modal { background:var(--bg-panel); border:1px solid var(--border); border-radius:12px; width:450px; padding:24px; box-shadow:0 10px 40px rgba(0,0,0,0.8); }
+.modal h2 { margin-bottom:16px; font-size:20px; }
+.form-group { margin-bottom:16px; }
+.form-group label { display:block; margin-bottom:6px; color:var(--text-muted); font-size:14px; font-weight:600; }
+.form-input { width:100%; background:var(--bg-app); border:1px solid var(--border); color:var(--text-main); padding:10px; border-radius:6px; outline:none; font-family:var(--font-sans); }
+.form-input:focus { border-color:var(--text-dim); }
+
+.ctx-menu { position:fixed; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; padding:4px 0; z-index:2000; box-shadow:0 8px 24px rgba(0,0,0,0.8); display:none; min-width:160px; }
+.ctx-item { padding:8px 16px; font-size:14px; cursor:pointer; color:var(--text-main); }
+.ctx-item:hover { background:var(--bg-hover); }
+.ctx-item.danger { color:var(--red); }
+
+.model-menu-btn { padding:4px; margin:-4px; cursor:pointer; border-radius:4px; opacity:0; transition:opacity 0.2s; }
+.list-item:hover .model-menu-btn { opacity:1; }
+.model-menu-btn:hover { background:var(--bg-hover); }
 </style>
 </head>
 <body>
@@ -378,9 +396,15 @@ html, body {
     <div class="topbar-center" id="topActiveInfo">
       <!-- dynamic content here -->
     </div>
-    <div class="topbar-right">
-      <span id="topMem" style="color:var(--text-main)">Sistem: —</span>
-      <span id="topCpu" style="font-size:14px; color:var(--text-muted)">CPU Compute: —</span>
+    <div class="topbar-right" style="flex-direction:row; align-items:center; gap:24px;">
+      <div id="topButtons" style="display:flex; gap:12px;">
+        <button class="filter-btn" onclick="showDownloadModal()">⬇️ Model İndir</button>
+        <button class="filter-btn" style="padding:4px 10px;" onclick="showSettingsModal()">⚙️ Ayarlar</button>
+      </div>
+      <div style="display:flex; flex-direction:column; text-align:right;">
+        <span id="topMem" style="color:var(--text-main)">Sistem: —</span>
+        <span id="topCpu" style="font-size:14px; color:var(--text-muted)">CPU Compute: —</span>
+      </div>
     </div>
   </header>
 
@@ -423,6 +447,51 @@ html, body {
 
 <div class="toast-container" id="toastContainer"></div>
 
+<!-- Context Menu -->
+<div class="ctx-menu" id="ctxMenu">
+  <div class="ctx-item" onclick="ctxDo('rename')">✏️ Yeniden Adlandır</div>
+  <div class="ctx-item" onclick="ctxDo('open')">📂 Finder'da Aç</div>
+  <div class="ctx-item danger" onclick="ctxDo('delete')">🗑️ Modeli Sil</div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal" onclick="closeModal(event, 'settingsModal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2>⚙️ Sistem Ayarları</h2>
+    <div class="form-group">
+      <label>Model Dizini (MLX_MODELS_DIR)</label>
+      <input type="text" class="form-input" id="setDir" placeholder="Örn: /Users/mac/models">
+    </div>
+    <div class="form-group">
+      <label>Varsayılan Sistem Rolü (System Prompt)</label>
+      <textarea class="form-input" id="setSys" style="height:80px; resize:vertical">Sen yardımcı bir asistan programcısın. Formatı koru.</textarea>
+    </div>
+    <div class="form-group">
+      <label>Chat Sıcaklığı (Temperature)</label>
+      <input type="number" class="form-input" id="setTemp" step="0.1" min="0" max="2" value="0.7">
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+      <button class="filter-btn" onclick="document.getElementById('settingsModal').style.display='none'">İptal</button>
+      <button class="btn btn-primary" style="padding:6px 16px; font-size:15px;" onclick="saveSettings()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- Download Modal -->
+<div class="modal-overlay" id="downloadModal" onclick="closeModal(event, 'downloadModal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2>📥 Model İndir (HuggingFace)</h2>
+    <div class="form-group">
+      <label>HuggingFace Model ID</label>
+      <input type="text" class="form-input" id="dlRepo" placeholder="Örn: mlx-community/Qwen2.5-Coder-14B-Instruct-MLX-4bit">
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+      <button class="filter-btn" onclick="document.getElementById('downloadModal').style.display='none'">İptal</button>
+      <button class="btn btn-primary" style="padding:6px 16px; font-size:15px;" onclick="startDownload()">Arka Planda İndir</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // State
 let models = [];
@@ -432,6 +501,8 @@ let activeProcess = {};
 let selectedData = null;
 let chatHistory = [];
 let filterMode = 'all';
+let attachedImageBase64 = null;
+let ctxSelectedPath = '';
 
 // Constants
 const ICONS = {
@@ -556,7 +627,10 @@ function renderList() {
     
     return `
       <div class="${cls}" onclick="onSelectModel('${m.path.replace(/'/g,"\\'")}')">
-        <div class="item-title">${m.name}</div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div class="item-title">${m.name}</div>
+          <div class="model-menu-btn" onclick="showCtxMenu(event, '${m.path.replace(/'/g,"\\'")}')">⋮</div>
+        </div>
         <div class="item-meta">
           <span style="color:var(--text-dim)">${m.publisher}</span>
           ${m.format ? `<span class="badge" style="text-transform:uppercase">${m.format}</span>` : ''}
@@ -657,6 +731,10 @@ function renderMain() {
           <label style="font-size:13px; color:var(--text-dim); text-transform:uppercase">Proxy Port</label>
           <input type="number" id="portInp" class="port-input" value="${isAct ? activeProcess.proxy_port || 8087 : 8087}">
         </div>
+        <div style="display:flex; flex-direction:column; gap:4px; max-width:140px">
+          <label style="font-size:13px; color:var(--text-dim); text-transform:uppercase">LoRA Adapter</label>
+          <input type="text" id="adapterInp" class="port-input" style="width:100%" placeholder="(Opsiyonel)">
+        </div>
         <div style="width:1px; height:32px; background:var(--border); margin:0 8px"></div>
         ${actionHtml}
       </div>
@@ -677,9 +755,16 @@ function renderMain() {
           }
         </div>
         <div class="chat-input-wrapper">
-          <div class="chat-input-box">
-            <textarea id="chatInput" class="chat-textarea" placeholder="${isRunning ? 'Mesaj yazın (Enter)...' : 'Devre dışı.'}" ${!isRunning?'disabled':''} rows="1" onkeydown="handleEnter(event)"></textarea>
+          <div class="chat-input-box" style="display:flex; align-items:center; gap:8px;">
+            <label class="chat-btn filter-btn" style="padding:10px; cursor:pointer;" title="Görsel Ekle (Vision)">
+              📎<input type="file" id="chatImageUpload" accept="image/*" style="display:none;" onchange="handleImage(event)" ${!isRunning?'disabled':''}>
+            </label>
+            <textarea id="chatInput" class="chat-textarea" placeholder="${isRunning ? 'Mesaj yazın (Enter)...' : 'Devre dışı.'}" ${!isRunning?'disabled':''} rows="1" onkeydown="handleEnter(event)" style="flex:1"></textarea>
             <button class="chat-send-btn" onclick="sendChat()" ${!isRunning?'disabled':''}>${ICONS.send}</button>
+          </div>
+          <div id="imgPreviewWrapper" style="display:none; margin-top:8px; align-items:center; gap:8px;">
+             <img id="imgPreview" src="" style="width:40px;height:40px;object-fit:cover;border-radius:4px;border:1px solid var(--border)">
+             <button class="filter-btn" style="color:var(--red);font-size:12px;padding:2px 6px" onclick="clearImage()">Sil</button>
           </div>
           <div style="text-align:center;font-size:14px;color:var(--text-dim);margin-top:16px">
              Bu arayüz HTTP üzerinden lokal MLX Python köprüsüne (proxy) bağlıdır.
@@ -772,12 +857,95 @@ async function runCompatCheck(m, cfg) {
   }
 }
 
+// V2 Modals & Handlers
+function showSettingsModal() { 
+  document.getElementById('settingsModal').style.display='flex';
+  document.getElementById('setTemp').value = localStorage.getItem('temp') || 0.7;
+  document.getElementById('setSys').value = localStorage.getItem('sys') || "Sen yardımcı bir asistan programcısın. Formatı koru.";
+  fetchApi('GET', '/api/settings').then(s => {
+    if(s && s.models_dir) document.getElementById('setDir').value = s.models_dir;
+  });
+}
+async function saveSettings() {
+  localStorage.setItem('temp', document.getElementById('setTemp').value);
+  localStorage.setItem('sys', document.getElementById('setSys').value);
+  let dir = document.getElementById('setDir').value.trim();
+  if(dir) await fetchApi('POST', '/api/settings', { models_dir: dir });
+  document.getElementById('settingsModal').style.display='none';
+  toast('Ayarlar kaydedildi.');
+}
+function showDownloadModal() { document.getElementById('downloadModal').style.display='flex'; }
+async function startDownload() {
+  let rep = document.getElementById('dlRepo').value.trim();
+  if(!rep) return;
+  document.getElementById('downloadModal').style.display='none';
+  try {
+    let r = await fetchApi('POST', '/api/models/download', { repo_id: rep });
+    toast(r.message);
+  } catch(e) { toast(e.message); }
+}
+function closeModal(e, id) { if(e.target.id === id) document.getElementById(id).style.display='none'; }
+
+// Vision Upload
+function handleImage(e) {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (re) => {
+    attachedImageBase64 = re.target.result;
+    document.getElementById('imgPreview').src = attachedImageBase64;
+    document.getElementById('imgPreviewWrapper').style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+}
+function clearImage() {
+  attachedImageBase64 = null;
+  document.getElementById('imgPreviewWrapper').style.display = 'none';
+  document.getElementById('chatImageUpload').value = '';
+}
+
+// Context Menu
+function showCtxMenu(e, path) {
+  e.stopPropagation();
+  ctxSelectedPath = path;
+  const m = document.getElementById('ctxMenu');
+  m.style.display = 'block';
+  m.style.top = e.clientY + 'px';
+  m.style.left = e.clientX + 'px';
+}
+window.addEventListener('click', () => { document.getElementById('ctxMenu').style.display='none'; });
+
+async function ctxDo(action) {
+  if(!ctxSelectedPath) return;
+  let p = ctxSelectedPath;
+  if(action === 'delete') {
+     if(confirm('Model dizinini silmek istediğinize emin misiniz?')) {
+        await fetchApi('DELETE', '/api/models/delete?path=' + encodeURIComponent(p));
+        toast('Model silindi.');
+        doRescan();
+     }
+  } else if(action === 'rename') {
+     let nn = prompt('Yeni Klasör Adı:');
+     if(nn) {
+        await fetchApi('POST', '/api/models/rename', { old_path: p, new_name: nn });
+        toast('Klasör yeniden adlandırıldı.');
+        doRescan();
+     }
+  } else if(action === 'open') {
+     await fetchApi('POST', '/api/models/open_explorer?path=' + encodeURIComponent(p));
+  }
+}
+
 // Operations
 async function doStart() {
   const p = document.getElementById('portInp').value;
+  const adp = document.getElementById('adapterInp')?.value.trim();
+  const reqPay = { model_path: selectedData.model.path, port: parseInt(p) };
+  if(adp) reqPay.adapter_path = adp;
+  
   toast('Süreç başlatılıyor...');
   try {
-    await fetchApi('POST', '/api/start', { model_path: selectedData.model.path, port: parseInt(p) });
+    await fetchApi('POST', '/api/start', reqPay);
     chatHistory = [];
   } catch(e) { toast('Hata: ' + e.message); }
 }
@@ -793,9 +961,13 @@ async function doStop() {
 
 async function doSwitch() {
   const p = document.getElementById('portInp').value;
+  const adp = document.getElementById('adapterInp')?.value.trim();
+  const reqPay = { model_path: selectedData.model.path, port: parseInt(p) };
+  if(adp) reqPay.adapter_path = adp;
+  
   toast('Bellek aktarılıyor...');
   try {
-    await fetchApi('POST', '/api/switch', { model_path: selectedData.model.path, port: parseInt(p) });
+    await fetchApi('POST', '/api/switch', reqPay);
     chatHistory = [];
   } catch(e) { toast('Hata: ' + e.message); }
 }
@@ -803,22 +975,40 @@ async function doSwitch() {
 async function sendChat() {
   const inp = document.getElementById('chatInput');
   const txt = inp.value.trim();
-  if(!txt || activeStatus !== 'running') return;
+  if(!txt && !attachedImageBase64) return;
+  if(activeStatus !== 'running') return;
   
   const tokenNode = document.getElementById('maxTokensInp');
   const tokensToGenerate = tokenNode ? parseInt(tokenNode.value) || 8192 : 8192;
+  const temp = parseFloat(localStorage.getItem('temp') || "0.7");
+  const sysPrompt = localStorage.getItem('sys') || "Sen yardımcı bir asistan programcısın. Formatı koru.";
   
   inp.value = '';
-  chatHistory.push({ role: 'user', content: txt });
+  
+  let msgContent = txt;
+  if(attachedImageBase64) {
+    msgContent = [
+       { type: "text", text: txt },
+       { type: "image_url", image_url: { url: attachedImageBase64 } }
+    ];
+  }
+  
+  chatHistory.push({ role: 'user', content: txt || '[Görsel Eklendi]' });
+  
+  let apicast = [];
+  if(chatHistory.length === 1 && sysPrompt) apicast.push({ role: 'system', content: sysPrompt });
+  apicast.push({ role: 'user', content: msgContent });
+  
   renderMain();
   
   try {
     const res = await fetchApi('POST', '/api/chat', {
-      messages: chatHistory,
-      max_tokens: tokensToGenerate,
-      temperature: 0.7
+       messages: apicast,
+       max_tokens: tokensToGenerate,
+       temperature: temp
     });
     chatHistory.push({ role: 'assistant', content: res.choices[0].message.content });
+    clearImage();
   } catch(e) {
     chatHistory.push({ role: 'assistant', content: `[SYSTEM ERROR] ${e.message}` });
   }

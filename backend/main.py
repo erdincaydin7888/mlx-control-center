@@ -15,7 +15,9 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+import shutil
+import subprocess
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -81,6 +83,14 @@ FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 class StartRequest(BaseModel):
     model_path: str
     port: int = DEFAULT_PROXY_PORT
+    adapter_path: str | None = None
+
+class RenameRequest(BaseModel):
+    old_path: str
+    new_name: str
+
+class DownloadRequest(BaseModel):
+    repo_id: str
 
 
 class ChatRequest(BaseModel):
@@ -135,6 +145,75 @@ def model_detail(path: str):
     return get_model_detail(path)
 
 
+@app.delete("/api/models/delete")
+def delete_model(path: str):
+    p = Path(path)
+    if p.exists() and p.is_dir():
+        shutil.rmtree(p, ignore_errors=True)
+        _get_models(force=True)
+        return {"success": True, "message": "Model silindi."}
+    raise HTTPException(404, "Model bulunamadı.")
+
+
+@app.post("/api/models/rename")
+def rename_model(req: RenameRequest):
+    old_p = Path(req.old_path)
+    if not old_p.exists():
+        raise HTTPException(404, "Model bulunamadı.")
+    new_p = old_p.parent / req.new_name
+    if new_p.exists():
+        raise HTTPException(400, "Bu isimde bir model zaten var.")
+    old_p.rename(new_p)
+    _get_models(force=True)
+    return {"success": True, "new_path": str(new_p)}
+
+
+@app.post("/api/models/open_explorer")
+def open_explorer(path: str):
+    p = Path(path)
+    if p.exists():
+        subprocess.run(["open", str(p)])
+        return {"success": True}
+    raise HTTPException(404, "Model bulunamadı.")
+
+
+def _download_task(repo_id: str, dest_path: Path):
+    try:
+        subprocess.run(
+            ["huggingface-cli", "download", repo_id, "--local-dir", str(dest_path)],
+            check=True
+        )
+        _get_models(force=True)
+    except Exception as e:
+        logger.error(f"İndirme hatası ({repo_id}): {e}")
+
+
+@app.post("/api/models/download")
+def download_model(req: DownloadRequest, background_tasks: BackgroundTasks):
+    repo_name = req.repo_id.split("/")[-1]
+    dest = MODELS_BASE_DIR / req.repo_id.split("/")[0] / repo_name
+    dest.mkdir(parents=True, exist_ok=True)
+    background_tasks.add_task(_download_task, req.repo_id, dest)
+    return {"success": True, "message": "İndirme arka planda başladı."}
+
+
+@app.get("/api/settings")
+def get_settings():
+    settings_file = Path(__file__).resolve().parent.parent / "settings.json"
+    if settings_file.exists():
+        with open(settings_file, "r") as f:
+            return json.load(f)
+    return {}
+
+
+@app.post("/api/settings")
+def update_settings(settings: dict):
+    settings_file = Path(__file__).resolve().parent.parent / "settings.json"
+    with open(settings_file, "w") as f:
+        json.dump(settings, f, indent=2)
+    return {"success": True}
+
+
 @app.get("/api/active")
 def active_model():
     """Aktif model bilgisi."""
@@ -149,7 +228,7 @@ def start(req: StartRequest):
     if not p.exists():
         raise HTTPException(404, f"Model dizini bulunamadı: {req.model_path}")
     try:
-        info = start_model(req.model_path, req.port)
+        info = start_model(req.model_path, req.port, req.adapter_path)
         return _process_to_dict(info)
     except RuntimeError as exc:
         raise HTTPException(500, str(exc))
@@ -169,7 +248,7 @@ def switch(req: StartRequest):
     if not p.exists():
         raise HTTPException(404, f"Model dizini bulunamadı: {req.model_path}")
     try:
-        info = switch_model(req.model_path, req.port)
+        info = switch_model(req.model_path, req.port, req.adapter_path)
         return _process_to_dict(info)
     except RuntimeError as exc:
         raise HTTPException(500, str(exc))

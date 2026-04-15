@@ -2,14 +2,27 @@
 
 import os
 import sys
+import json
 from pathlib import Path
 
+# Load settings from settings.json if exists
+_SETTINGS_FILE = Path(__file__).resolve().parent.parent / "settings.json"
+_app_settings = {}
+if _SETTINGS_FILE.exists():
+    try:
+        with open(_SETTINGS_FILE, "r") as f:
+            _app_settings = json.load(f)
+    except Exception:
+        pass
+
 # ---------------------------------------------------------------
-# Model directory (configurable via environment variable)
+# Model directory (configurable via environment variable or settings.json)
 # ---------------------------------------------------------------
-MODELS_BASE_DIR = Path(
-    os.getenv("MLX_MODELS_DIR", str(Path.home() / ".lmstudio" / "models"))
-)
+_default_models_dir = _app_settings.get("models_dir")
+if not _default_models_dir:
+    _default_models_dir = os.getenv("MLX_MODELS_DIR", str(Path.home() / ".lmstudio" / "models"))
+
+MODELS_BASE_DIR = Path(_default_models_dir)
 
 # ---------------------------------------------------------------
 # MLX server / proxy scripts (relative to this project)

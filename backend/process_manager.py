@@ -172,7 +172,7 @@ def stop_model() -> bool:
     return stopped_any
 
 
-def start_model(model_path: str, proxy_port: int = DEFAULT_PROXY_PORT) -> ProcessInfo:
+def start_model(model_path: str, proxy_port: int = DEFAULT_PROXY_PORT, adapter_path: str | None = None) -> ProcessInfo:
     """Modeli başlat. Önce mevcut aktif modeli durdurur."""
     global _active, _server_proc, _proxy_proc
 
@@ -195,14 +195,18 @@ def start_model(model_path: str, proxy_port: int = DEFAULT_PROXY_PORT) -> Proces
     try:
         # 1. MLX Server başlat
         logger.info("MLX Server başlatılıyor: %s (port %d)", model_name, server_port)
+        cmd_args = [
+            PYTHON_BIN,
+            str(MLX_SERVER_SCRIPT),
+            "--model", model_path,
+            "--port", str(server_port),
+            "--log-level", "INFO",
+        ]
+        if adapter_path:
+            cmd_args.extend(["--adapter-path", adapter_path])
+            
         _server_proc = subprocess.Popen(
-            [
-                PYTHON_BIN,
-                str(MLX_SERVER_SCRIPT),
-                "--model", model_path,
-                "--port", str(server_port),
-                "--log-level", "INFO",
-            ],
+            cmd_args,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -252,10 +256,10 @@ def start_model(model_path: str, proxy_port: int = DEFAULT_PROXY_PORT) -> Proces
         raise
 
 
-def switch_model(model_path: str, proxy_port: int = DEFAULT_PROXY_PORT) -> ProcessInfo:
+def switch_model(model_path: str, proxy_port: int = DEFAULT_PROXY_PORT, adapter_path: str | None = None) -> ProcessInfo:
     """Aktif modeli değiştir (stop → start)."""
     logger.info("Model değiştiriliyor: %s", Path(model_path).name)
-    return start_model(model_path, proxy_port)
+    return start_model(model_path, proxy_port, adapter_path)
 
 
 def read_server_logs(max_lines: int = 30) -> list[str]:
