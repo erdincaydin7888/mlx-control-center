@@ -1537,6 +1537,7 @@ class APIHandler(BaseHTTPRequestHandler):
                 progress_callback=keepalive_callback,
             )
         except Exception as e:
+            logging.error(f"Generation error: {e}", exc_info=True)
             self._set_completion_headers(404)
             self.end_headers()
             self.wfile.write(json.dumps({"error": f"{e}"}).encode())

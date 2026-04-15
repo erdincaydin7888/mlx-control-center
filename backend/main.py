@@ -94,7 +94,7 @@ class DownloadRequest(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    messages: list[dict[str, str]]
+    messages: list[dict[str, Any]]
     max_tokens: int = 4096
     temperature: float = 0.7
     stream: bool = False
@@ -262,6 +262,13 @@ def system_stats():
     return dataclasses.asdict(stats)
 
 
+@app.get("/api/logs")
+def get_logs(max_lines: int = 50):
+    """Aktif MLX server loglarını döner."""
+    from .process_manager import read_server_logs
+    return {"logs": read_server_logs(max_lines)}
+
+
 @app.post("/api/compatibility")
 def check_compatibility(req: CompatibilityRequest):
     """CanIRunThisLLM benzeri donanım uyumluluk hesaplaması."""
@@ -278,13 +285,14 @@ def check_compatibility(req: CompatibilityRequest):
 @app.post("/api/chat")
 async def chat(req: ChatRequest):
     """Aktif modele chat mesajı gönder."""
+    logger.info("Chat isteği alındı: %d mesaj", len(req.messages))
     active = get_active_model()
     if active.status != "running":
         raise HTTPException(400, "Aktif model yok. Önce bir model başlatın.")
 
     url = f"http://localhost:{active.proxy_port}/v1/chat/completions"
     payload = {
-        "model": active.model_name,
+        "model": "default_model",  # Use generic name for preloaded model
         "messages": req.messages,
         "max_tokens": req.max_tokens,
         "temperature": req.temperature,

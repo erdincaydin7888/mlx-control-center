@@ -38,9 +38,13 @@ if not MLX_SERVER_SCRIPT.exists():
     MLX_PROXY_SCRIPT = _LEGACY_DIR / "mlx_proxy.py"
 
 # ---------------------------------------------------------------
-# Python binary (prefer the interpreter running this process)
+# Python binary (prioritize virtual environment)
 # ---------------------------------------------------------------
-PYTHON_BIN = os.getenv("MLX_PYTHON_BIN", sys.executable)
+_VENV_PYTHON = Path(__file__).resolve().parent.parent / ".venv" / "bin" / "python3"
+if not _VENV_PYTHON.exists():
+    _VENV_PYTHON = Path(__file__).resolve().parent.parent / "venv" / "bin" / "python3"
+
+PYTHON_BIN = os.getenv("MLX_PYTHON_BIN", str(_VENV_PYTHON) if _VENV_PYTHON.exists() else sys.executable)
 
 # ---------------------------------------------------------------
 # Default ports

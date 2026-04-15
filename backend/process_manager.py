@@ -11,7 +11,7 @@ import re
 import signal
 import subprocess
 import time
-import time
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -215,8 +215,8 @@ def start_model(model_path: str, proxy_port: int = DEFAULT_PROXY_PORT, adapter_p
         )
         _active.server_pid = _server_proc.pid
 
-        # Server'ın yüklenmesini bekle (model yükleme zaman alabilir)
-        time.sleep(3)
+        # Server'ın yüklenmesini bekle (model yükleme zaman alabilir, büyük modeller için 10 sn yeterli)
+        time.sleep(10)
 
         if _server_proc.poll() is not None:
             # Süreç hemen çıktıysa hata var
