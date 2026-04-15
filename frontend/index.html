@@ -570,6 +570,29 @@ html, body {
   color: white;
   transform: scale(1.1);
 }
+
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+.copy-btn:hover {
+  background: rgba(34, 211, 238, 0.1);
+  color: var(--accent);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.copy-btn:active { transform: translateY(0) scale(0.95); }
+.copy-btn svg { width: 14px; height: 14px; }
 </style>
 </head>
 <body>
@@ -715,7 +738,8 @@ const ICONS = {
   clip: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>`,
   up: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>`,
   mic: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`,
-  square_stop: `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>`
+  square_stop: `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>`,
+  copy: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`
 };
 
 // API Wrapper
@@ -729,6 +753,16 @@ async function fetchApi(method, endpoint, body) {
     throw new Error(err);
   }
   return r.json();
+}
+
+function copyToClipboard(text, label) {
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    toast(`${label} başarıyla kopyalandı!`);
+  }).catch(err => {
+    console.error('Copy failed:', err);
+    toast('Kopyalama başarısız oldu.');
+  });
 }
 
 function estimatePerformance(m) {
@@ -941,6 +975,9 @@ function renderMain() {
         <h1>
           ${isAct ? `<span class="status-indicator ${activeStatus}"></span>` : ''}
           ${m.name}
+          <button class="copy-btn" onclick="copyToClipboard('${m.publisher}/${m.name}', 'Model Adı')" title="Tam Adı Kopyala">
+            ${ICONS.copy}
+          </button>
         </h1>
         <div class="model-publisher">${m.publisher} • Modeli Local Dizin: ~.lmstudio/models</div>
       </div>
@@ -1040,6 +1077,13 @@ function renderMain() {
         <div class="prop-grid">
           <div class="prop-item"><span class="prop-label">Mimari</span><span class="prop-val">${m.architecture || cfg.model_type || '-'}</span></div>
           <div class="prop-item"><span class="prop-label">Parametre</span><span class="prop-val">${m.param_hint || '-'}</span></div>
+          <div class="prop-item">
+            <span class="prop-label">Endpoint</span>
+            <span class="prop-val" style="display:flex; align-items:center; gap:8px; color:var(--accent); font-family:monospace; font-size:14px;">
+              ${isRunning ? `http://localhost:${activeProcess.proxy_port}/v1` : '-'}
+              ${isRunning ? `<button class="copy-btn" onclick="copyToClipboard('http://localhost:${activeProcess.proxy_port}/v1', 'Endpoint')">${ICONS.copy}</button>` : ''}
+            </span>
+          </div>
           <div class="prop-item"><span class="prop-label">Quant Türü</span><span class="prop-val">${m.quant_type || '-'}</span></div>
           <div class="prop-item"><span class="prop-label">Dosya Boyutu</span><span class="prop-val">${(selectedData.detail.total_size_gb || m.size_gb)} GB</span></div>
           <div class="prop-item"><span class="prop-label">Max Context</span><span class="prop-val">${cfg.max_position_embeddings || '-'}</span></div>
@@ -1392,10 +1436,16 @@ function connectWS() {
     document.getElementById('topActiveInfo').innerHTML = `
       <div style="display:flex; align-items:center; gap:12px; color:${activeStatus === 'running' ? '#fff' : 'var(--text-dim)'}">
          <span class="${tIcon}" style="width:12px; height:12px; box-shadow:0 0 10px var(--green)"></span> 
-         ${tName}
+         <span style="display:flex; align-items:center; gap:6px">
+           ${tName}
+           ${activeStatus === 'running' ? `<button class="copy-btn" style="width:20px; height:20px;" onclick="copyToClipboard('${d.active.model_path}', 'Model Yolu')" title="Model Yolunu Kopyala">${ICONS.copy}</button>` : ''}
+         </span>
          ${activeStatus === 'running' ? `<div class="topbar-close-btn" onclick="doStop()" title="Modeli Durdur">${ICONS.square_stop}</div>` : ''}
       </div>
-      <div style="font-size:15px; font-weight:500; color:var(--text-muted); opacity:0.9">${subTxt}</div>
+      <div style="font-size:15px; font-weight:500; color:var(--text-muted); opacity:0.9; display:flex; align-items:center; gap:8px">
+        ${subTxt}
+        ${activeStatus === 'running' ? `<button class="copy-btn" style="width:20px; height:20px;" onclick="copyToClipboard('http://localhost:${d.active.proxy_port}/v1', 'Endpoint')" title="Endpointi Kopyala">${ICONS.copy}</button>` : ''}
+      </div>
     `;
 
     // Re-render if state changed
