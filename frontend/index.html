@@ -992,6 +992,9 @@ function renderMain() {
 
               <!-- Right Actions (Send/Voice) -->
               <div class="action-group">
+                <button id="micBtn" class="prompt-btn" onclick="toggleMic()" title="Sesle Yaz" ${!isRunning ? 'disabled' : ''}>
+                  ${ICONS.mic}
+                </button>
                 <button id="sendBtn" class="send-btn-v2" onclick="sendChat()" title="Gönder" ${!isRunning ? 'disabled' : ''}>
                   ${ICONS.up}
                 </button>
@@ -1193,6 +1196,21 @@ function updateToggleUI() {
   else if(showThink) inp.placeholder = "🧠 Derin düşünme modunda sor...";
   else if(showCanvas) inp.placeholder = "🎨 Canvas modunda oluştur...";
   else inp.placeholder = "Mesaj yazın (Enter)...";
+}
+
+let isRecording = false;
+function toggleMic() {
+  isRecording = !isRecording;
+  const btn = document.getElementById('micBtn');
+  const box = document.getElementById('aiPromptBox');
+  if(isRecording) {
+    btn.style.color = '#ef4444';
+    box.classList.add('recording');
+    toast('Ses kaydı simüle ediliyor... (Web Speech API entegrasyonu için hazırdır)');
+  } else {
+    btn.style.color = '#9ca3af';
+    box.classList.remove('recording');
+  }
 }
 
 // Context Menu
