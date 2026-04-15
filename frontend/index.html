@@ -531,23 +531,41 @@ async function fetchApi(method, endpoint, body) {
 }
 
 function estimatePerformance(m) {
-  let paramB = 7.0;
-  if (m.param_hint) paramB = parseFloat(m.param_hint.replace(/[^0-9.]/g, '')) || 7.0;
-  
+  // Quantization bits (default 8 if unknown)
   let qBits = 8.0;
   if (m.quant_type === '4bit') qBits = 4.0;
   else if (m.quant_type === '5bit') qBits = 5.0;
   else if (m.quant_type === '6bit') qBits = 6.0;
 
-  // Apple M3 Ultra bellek bant yığını (~800 GB/s)
-  let weightGb = paramB * (qBits / 8.0);
+  // Real RAM usage from disk size (most reliable for MLX)
+  let diskSizeGb = parseFloat(m.size_gb) || 0;
+  
+  // Weights are loaded into memory. Add ~10% for KV cache and system overhead.
+  let ramNeeded = diskSizeGb > 0 ? (diskSizeGb * 1.15) : 0;
+
+  // Parameter estimation for TPS (if name guess failed)
+  let paramB = 7.0;
+  if (m.param_hint) {
+    paramB = parseFloat(m.param_hint.replace(/[^0-9.]/g, '')) || 7.0;
+  } else if (diskSizeGb > 0) {
+    // Inverse calculation: params = (size / 1.1) / (bits / 8)
+    paramB = (diskSizeGb / (qBits / 8.0));
+  }
+  
+  // Apple M3 Ultra performance guess (~800 GB/s)
+  let weightGb = diskSizeGb || (paramB * (qBits / 8.0));
   let activeWeightGb = m.is_moe ? (weightGb * 0.25) : weightGb;
   let tps = 800 / (activeWeightGb > 0 ? activeWeightGb : 1);
-  let ramNeeded = weightGb * 1.15; // weights + kv cache buffer
   
-  if (m.format === 'gguf') tps = tps * 0.6; // gguf cpu/mlx farkı (kabaca)
+  if (m.format === 'gguf') tps = tps * 0.6;
 
-  return { tps: Math.round(tps), ramGb: ramNeeded.toFixed(1) };
+  // If we still have 0 for ramNeeded, fallback to safe default
+  if (ramNeeded === 0) ramNeeded = (paramB * (qBits / 8.0)) * 1.15;
+
+  return { 
+    tps: Math.round(tps), 
+    ramGb: ramNeeded.toFixed(1) 
+  };
 }
 
 // Toast

@@ -53,9 +53,13 @@ def _guess_params(dirname: str) -> str:
     """Dizin adından parametre ipucu çıkar (ör. '35B', '480B')."""
     import re
 
+    # Standart patterns: 7B, 32b, 480b, 1.5b
     match = re.search(r"(\d+(?:\.\d+)?)\s*[Bb]\b", dirname)
     if match:
         return match.group(0).upper().strip()
+    
+    # MLX naming patterns: Qwen2.5-7B, Llama-3-8B etc. (already covered above)
+    # Falling back to an empty string if no clear 'B' found.
     return ""
 
 
