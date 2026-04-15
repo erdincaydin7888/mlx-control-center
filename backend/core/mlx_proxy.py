@@ -106,14 +106,6 @@ class ProxyHandler(http.server.BaseHTTPRequestHandler):
             except:
                 pass
 
-    def do_OPTIONS(self):
-        """Handle pre-flight CORS requests"""
-        self.send_response(204)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
-        self.end_headers()
-
     def do_GET(self):
         # Forward GET requests (like /v1/models) to real server
         real_port = self.server.server_address[1] + 10

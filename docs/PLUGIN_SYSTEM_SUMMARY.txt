@@ -1,0 +1,211 @@
+================================================================================
+                    PLUGIN SİSTEMİ - PROJE ÖZETİ
+================================================================================
+
+PROJE: Mlx - Plugin Sistemi Entegrasyonu
+TARİH: 2026-04-12
+MİMARİ: Mikroservis + Event-Driven
+
+================================================================================
+                         OLUŞTURULAN DOSYALAR
+================================================================================
+
+PLUGIN SİSTEMİ KLASÖRÜ (/plugin_system/)
+-----------------------------------------
+1. __init__.py          - Modül importları ve sürüm bilgisi
+2. models.py            - Veri modelleri (PluginInfo, ModelInfo, Event vb.)
+3. events.py            - EventDispatcher ve EventPublisher
+4. loader.py            - ModelLoader (hot-reload desteği)
+5. watcher.py           - FileWatcher (dosya değişiklik izleme)
+6. api.py               - PluginAPI (REST endpoint'leri)
+7. manager.py           - PluginManager (merkezi yönetim)
+8. registry.py          - PluginRegistry (merkezi kayıt)
+9. worker.py            - WorkerPool (asenkron görev yönetimi)
+10. connector.py        - PluginConnector (proxy-server entegrasyonu)
+
+ÖRNEK PLUGİNLER (/plugin_system/examples/)
+------------------------------------------
+1. __init__.py                  - Örnek modül importları
+2. custom_model_loader.py       - Özel model yükleme
+3. request_interceptor.py       - Request filtreleme
+4. metrics_collector.py         - Sistem metrik toplama
+
+TEST VE DOKÜMANTASYON
+---------------------
+1. test_plugin_system.py        - Unit test dosyası
+2. PLUGIN_SYSTEM_README.md      - Detaylı dokümantasyon
+3. start_with_plugins.sh        - Proxy başlatma scripti
+4. start_server_with_plugins.sh - Server başlatma scripti
+
+================================================================================
+                         MİMARİ KATMANLAR
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                        PLUGIN MİMARİSİ                              │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                       │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │                    PLUGIN MANAGER                            │   │
+│  │  - Plugin yükleme/boşaltma                                   │   │
+│  │  - Event dağıtımı                                            │   │
+│  │  - Model yönetimi                                            │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                                                                       │
+│  ┌──────────────────┐     ┌──────────────────┐     ┌──────────────┐ │
+│  │   MODEL LOADER   │     │  EVENT PUBLISHER │     │ FILE WATCHER │ │
+│  │  - Hot-reload    │────▶│  - Event yayını  │────▶│  - Dosya izle  │ │
+│  │  - Model yönetimi│     │  - Handler yönetimi│    │  - Değişiklik │ │
+│  └──────────────────┘     └──────────────────┘     └──────────────┘ │
+│                                                                       │
+│  ┌──────────────────┐     ┌──────────────────┐     ┌──────────────┐ │
+│  │   PLUGIN API     │     │  WORKER POOL     │     │ REGISTRY     │ │
+│  │  - REST API      │     │  - Asenkron görev│     │  - Kayıt      │ │
+│  │  - HTTP endpoint │     │  - Thread yönetimi│    │  - Meta veri  │ │
+│  └──────────────────┘     └──────────────────┘     └──────────────┘ │
+│                                                                       │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │                  CONNECTOR LAYER                             │   │
+│  │  - Proxy entegrasyonu (mlx_proxy.py)                         │   │
+│  │  - Server entegrasyonu (mlx_server_patch.py)                 │   │
+│  │  - Hot-reload yönetimi                                       │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                                                                       │
+└─────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+                         ÖZELLİKLER
+================================================================================
+
+✓ HOT-RELOAD: Dosya değişikliklerinde otomatik yeniden yükleme
+✓ EVENT-DRIVEN: Event-based mimari ile gevşek bağlılık
+✓ REST API: HTTP API üzerinden plugin yönetimi
+✓ WORKER POOL: Asenkron görev yönetimi
+✓ METRICS: Sistem metriklerini toplama
+✓ HEALTH CHECK: Sistem sağlık kontrolü
+✓ FILE WATCHING: Dosya değişikliklerini izleme
+✓ PLUGIN REGISTRY: Merkezi plugin kaydı
+
+================================================================================
+                         API ENDPOINT'LERİ
+================================================================================
+
+GET  /v1/plugins              - Tüm plugin'leri listele
+GET  /v1/plugins/{id}         - Plugin bilgilerini al
+POST /v1/plugins              - Yeni plugin yükle
+POST /v1/plugins/{id}/reload  - Plugin'i yeniden yükle
+POST /v1/plugins/{id}/unload  - Plugin'i boşalt
+DELETE /v1/plugins/{id}       - Plugin'i tamamen kaldır
+
+GET  /v1/models               - Tüm modelleri listele
+GET  /v1/models/{id}          - Model bilgilerini al
+POST /v1/models               - Yeni model yükle
+POST /v1/models/{id}/reload   - Model'i yeniden yükle
+POST /v1/models/{id}/unload   - Model'i boşalt
+
+GET  /v1/health               - Sağlık kontrolü
+GET  /v1/events               - Event log
+
+================================================================================
+                         KULLANIM ÖRNEKLERİ
+================================================================================
+
+1. BASİT KULLANIM:
+   from plugin_system import PluginManager
+   pm = PluginManager(proxy_port=5000, api_port=8080)
+   pm.load_plugin("/path/to/plugin")
+   pm.start_api_server()
+   pm.start_watcher()
+
+2. REST API:
+   curl http://localhost:8080/v1/plugins
+   curl -X POST http://localhost:8080/v1/plugins \
+        -H "Content-Type: application/json" \
+        -d '{"plugin_path": "/path/to/plugin"}'
+
+3. HOT-RELOAD:
+   from plugin_system import HotReloadManager
+   hrm = HotReloadManager(plugin_manager)
+   hrm.start()
+
+4. WORKER POOL:
+   from plugin_system import WorkerPool
+   with WorkerPool(num_workers=4) as pool:
+       pool.submit("task", my_function, arg1, arg2)
+
+================================================================================
+                         PROJE YAPISI
+================================================================================
+
+Mlx/
+├── plugin_system/              # Ana plugin sistemi
+│   ├── __init__.py
+│   ├── models.py
+│   ├── events.py
+│   ├── loader.py
+│   ├── watcher.py
+│   ├── api.py
+│   ├── manager.py
+│   ├── registry.py
+│   ├── worker.py
+│   ├── connector.py
+│   └── examples/              # Örnek plugin'ler
+│       ├── __init__.py
+│       ├── custom_model_loader.py
+│       ├── request_interceptor.py
+│       └── metrics_collector.py
+├── mlx_proxy.py               # Proxy (entegre edildi)
+├── mlx_server_patch.py        # Server (entegre edildi)
+├── test_plugin_system.py      # Test dosyası
+├── PLUGIN_SYSTEM_README.md    # Dokümantasyon
+├── start_with_plugins.sh      # Proxy başlatma scripti
+├── start_server_with_plugins.sh # Server başlatma scripti
+└── requirements.txt           # Gerekli bağımlılıklar
+
+================================================================================
+                         GEREKLİ BAĞIMLILIKLAR
+================================================================================
+
+pip install -r requirements.txt
+
+Gerekli paketler:
+- mlx-lm              # MLX model kütüphanesi
+- openai              # OpenAI client
+- watchdog            # Dosya izleme
+- psutil             # Sistem metrikleri
+- requests           # HTTP istekleri
+
+================================================================================
+                         SONRAKI ADIMLAR
+================================================================================
+
+1. Gerekli bağımlılıkları yükleyin:
+   pip install -r requirements.txt
+
+2. Test dosyasını çalıştırın:
+   python3 test_plugin_system.py
+
+3. Proxy'yi plugin sistemi ile başlatın:
+   ./start_with_plugins.sh 5000
+
+4. Server'ı plugin sistemi ile başlatın:
+   ./start_server_with_plugins.sh /path/to/model 8080
+
+5. API endpoint'lerini test edin:
+   curl http://localhost:8080/v1/health
+
+================================================================================
+                         LİSANS
+================================================================================
+
+Bu sistem, MLX Proxy ve Server ile birlikte kullanılmak üzere tasarlanmıştır.
+Tüm dosyalar açık kaynak olarak paylaşılmıştır.
+
+================================================================================
+                         İLETİŞİM
+================================================================================
+
+Sorularınız için PLUGIN_SYSTEM_README.md dosyasını inceleyin.
+Test dosyaları ile sistemi doğrulayabilirsiniz.
+
+================================================================================
