@@ -40,7 +40,9 @@ if not MLX_SERVER_SCRIPT.exists():
 # ---------------------------------------------------------------
 # Python binary (prioritize virtual environment)
 # ---------------------------------------------------------------
-_VENV_PYTHON = Path(__file__).resolve().parent.parent / ".venv" / "bin" / "python3"
+_VENV_PYTHON = Path(__file__).resolve().parent.parent / ".venv_modern" / "bin" / "python3"
+if not _VENV_PYTHON.exists():
+    _VENV_PYTHON = Path(__file__).resolve().parent.parent / ".venv" / "bin" / "python3"
 if not _VENV_PYTHON.exists():
     _VENV_PYTHON = Path(__file__).resolve().parent.parent / "venv" / "bin" / "python3"
 

@@ -1,5 +1,6 @@
 # Copyright © 2023-2024 Apple Inc.
 
+import traceback
 import argparse
 import copy
 import heapq
@@ -72,6 +73,12 @@ try:
     VLM_AVAILABLE = True
 except ImportError:
     VLM_AVAILABLE = False
+
+try:
+    import dflash
+    DFLASH_AVAILABLE = True
+except ImportError:
+    DFLASH_AVAILABLE = False
 
 
 def get_system_fingerprint():
@@ -380,7 +387,14 @@ class LRUPromptCache:
         if "cache" in current:
             self._lru.remove(model, tokens)
         else:
-            cache_bytes = sum(c.nbytes for c in prompt_cache)
+            # Handle KVCache objects which may not have nbytes attribute in some versions
+            def get_nbytes(c):
+                if hasattr(c, "nbytes"):
+                    return c.nbytes
+                # Fallback for standard mlx_lm KVCache
+                return sum(x.nbytes if hasattr(x, "nbytes") else 0 for x in [getattr(c, 'keys', None), getattr(c, 'values', None)] if x is not None)
+
+            cache_bytes = sum(get_nbytes(c) for c in prompt_cache)
             current["cache"] = self.CacheEntry(prompt_cache, cache_bytes)
             self._n_bytes += cache_bytes
 
@@ -500,6 +514,7 @@ class Response:
     logprob: float
     finish_reason: Optional[str]
     top_tokens: Tuple[Dict[str, Any]]
+    tps: Optional[float] = None
 
 
 class TimeBudget:
@@ -550,6 +565,7 @@ class ModelProvider:
         self.model = None
         self.tokenizer = None
         self.draft_model = None
+        self.dflash_generator = None
         self.is_batchable = False
 
         group = mx.distributed.init()
@@ -564,6 +580,28 @@ class ModelProvider:
         if self.cli_args.model is not None:
             self.default_model_map[self.cli_args.model] = "default_model"
             self.load(self.cli_args.model, draft_model_path="default_model")
+
+    def _safe_load(self, path, is_vlm_requested, adapter_path, tokenizer_config):
+        """Try to load as VLM if requested, fallback to standard LLM if it fails."""
+        if is_vlm_requested and VLM_AVAILABLE:
+            try:
+                logging.info(f"Attempting to load as VLM: {path}")
+                model, tokenizer = load_vlm(
+                    path,
+                    adapter_path=adapter_path,
+                    tokenizer_config=tokenizer_config,
+                )
+                return model, tokenizer, True
+            except Exception as e:
+                logging.warning(f"VLM load failed for {path}: {e}. Falling back to standard LLM loader.")
+        
+        # Fallback or standard load
+        model, tokenizer = load(
+            path,
+            adapter_path=adapter_path,
+            tokenizer_config=tokenizer_config,
+        )
+        return model, tokenizer, False
 
     # Added in adapter_path to load dynamically
     def load(self, model_path, adapter_path=None, draft_model_path=None):
@@ -594,7 +632,7 @@ class ModelProvider:
                     with open(config_path, "r") as f:
                         cfg = json.load(f)
                         arch = cfg.get("model_type", "").lower()
-                        if any(x in arch for x in ["vision", "vl", "clip", "siglip", "llava", "qwen2_vl", "mymlx"]):
+                        if any(x in arch for x in ["vision", "vl", "clip", "siglip", "llava", "qwen2_vl", "mymlx", "qwen3_vl"]):
                             is_vlm = True
             except:
                 pass
@@ -606,22 +644,18 @@ class ModelProvider:
                     "argument or in the HTTP request"
                 )
             adapter_path = adapter_path or self.cli_args.adapter_path
-            # Use appropriate loader
-            loader = load_vlm if is_vlm else load
-            model, tokenizer = loader(
-                self.cli_args.model,
-                adapter_path=adapter_path,
-                tokenizer_config=tokenizer_config,
+            
+            model, tokenizer, actual_is_vlm = self._safe_load(
+                self.cli_args.model, is_vlm, adapter_path, tokenizer_config
             )
         else:
-            loader = load_vlm if is_vlm else load
-            model, tokenizer = loader(
-                model_path,
-                adapter_path=adapter_path,
-                tokenizer_config=tokenizer_config,
+            model, tokenizer, actual_is_vlm = self._safe_load(
+                model_path, is_vlm, adapter_path, tokenizer_config
             )
         
-        self.is_vlm = is_vlm
+        self.is_vlm = actual_is_vlm
+        self.model = model
+        self.tokenizer = tokenizer
 
         if self.cli_args.use_default_chat_template:
             if tokenizer.chat_template is None:
@@ -640,16 +674,37 @@ class ModelProvider:
                 )
 
         # Load draft model if specified
-        if (
-            draft_model_path == "default_model"
-            and self.cli_args.draft_model is not None
-        ):
-            self.draft_model, draft_tokenizer = load(self.cli_args.draft_model)
-            validate_draft_tokenizer(draft_tokenizer)
+        try:
+            if (
+                draft_model_path == "default_model"
+                and self.cli_args.draft_model is not None
+            ):
+                self.draft_model, draft_tokenizer = load(self.cli_args.draft_model)
+                validate_draft_tokenizer(draft_tokenizer)
 
-        elif draft_model_path is not None and draft_model_path != "default_model":
-            self.draft_model, draft_tokenizer = load(draft_model_path)
-            validate_draft_tokenizer(draft_tokenizer)
+            elif draft_model_path and draft_model_path != "default_model":
+                self.draft_model, draft_tokenizer = load(draft_model_path)
+                validate_draft_tokenizer(draft_tokenizer)
+        except Exception as e:
+            logging.error(f"Failed to load draft model: {e}")
+            self.draft_model = None
+
+        # Initialize dflash if requested and available
+        if (
+            self.cli_args.enable_dflash
+            and DFLASH_AVAILABLE
+            and self.draft_model is not None
+        ):
+            logging.info("Initializing dflash speculative decoding engine...")
+            try:
+                from dflash import DFlashBatchGenerator
+                self.dflash_generator = DFlashBatchGenerator(
+                    self.model, self.draft_model, self.tokenizer
+                )
+                logging.info("dflash engine initialized successfully.")
+            except Exception as e:
+                logging.error(f"Failed to initialize dflash: {e}")
+                self.dflash_generator = None
 
         if self.draft_model is None:
             self.is_batchable = all(
@@ -657,33 +712,6 @@ class ModelProvider:
             )
 
         return self.model, self.tokenizer
-
-
-def _make_sampler(args, tokenizer):
-    return make_sampler(
-        args.sampling.temperature,
-        top_p=args.sampling.top_p,
-        top_k=args.sampling.top_k,
-        min_p=args.sampling.min_p,
-        xtc_probability=args.sampling.xtc_probability,
-        xtc_threshold=args.sampling.xtc_threshold,
-        xtc_special_tokens=[
-            tokenizer.eos_token_id,
-            tokenizer.encode("\n"),
-        ],
-    )
-
-
-def _make_logits_processors(args):
-    return make_logits_processors(
-        args.logits.logit_bias,
-        args.logits.repetition_penalty,
-        args.logits.repetition_context_size,
-        args.logits.presence_penalty,
-        args.logits.presence_context_size,
-        args.logits.frequency_penalty,
-        args.logits.frequency_context_size,
-    )
 
 
 def _format_top_logprobs(logprobs, top_logprobs, tokenizer) -> Tuple[Dict[str, Any]]:
@@ -697,6 +725,24 @@ def _format_top_logprobs(logprobs, top_logprobs, tokenizer) -> Tuple[Dict[str, A
     return tuple(
         {"id": i, "token": s, "logprob": g}
         for i, s, g in zip(top_indices, txts, top_logprobs)
+    )
+
+
+def _make_sampler(args: GenerationArguments, tokenizer):
+    """Helper to create a sampler from GenerationArguments."""
+    return make_sampler(
+        args.sampling.temperature,
+        args.sampling.top_p,
+        args.sampling.top_k,
+    )
+
+
+def _make_logits_processors(args: GenerationArguments):
+    """Helper to create logits processors from GenerationArguments."""
+    return make_logits_processors(
+        logit_bias=args.logits.logit_bias,
+        repetition_penalty=args.logits.repetition_penalty,
+        repetition_context_size=args.logits.repetition_context_size,
     )
 
 
@@ -774,7 +820,10 @@ class ResponseGenerator:
             tools = request.tools
             role_mapping = request.role_mapping
 
-            if tokenizer.has_chat_template:
+            # Use chat template if available
+            has_chat_template = hasattr(tokenizer, "apply_chat_template") or (hasattr(tokenizer, "chat_template") and tokenizer.chat_template is not None)
+            
+            if has_chat_template:
                 process_message_content(messages)
                 
                 # Special handling for VLM
@@ -1137,10 +1186,10 @@ class ResponseGenerator:
                 _think_end = ""
 
             ctx = GenerationContext(
-                has_tool_calling=tokenizer.has_tool_calling,
-                tool_call_start=tokenizer.tool_call_start,
-                tool_call_end=tokenizer.tool_call_end,
-                tool_parser=tokenizer.tool_parser,
+                has_tool_calling=request.tools is not None,
+                tool_call_start=tokenizer.decode([tokenizer.get_command("<|tool_call|>")]) if hasattr(tokenizer, "get_command") else "",
+                tool_call_end=tokenizer.decode([tokenizer.get_command("<|tool_call_end|>")]) if hasattr(tokenizer, "get_command") else "",
+                tool_parser=getattr(tokenizer, "tool_parser", None) if hasattr(tokenizer, "tool_parser") else None,
                 has_thinking=_has_thinking,
                 think_start_id=_think_start_id,
                 think_end=_think_end,
@@ -1155,7 +1204,15 @@ class ResponseGenerator:
             rqueue.put(ctx)
             
             # Use VLM generation if images are present
-            if images and VLM_AVAILABLE:
+            if images:
+                if not VLM_AVAILABLE:
+                    raise ValueError("Image content detected but mlx-vlm is not installed.")
+                if not self.model_provider.is_vlm:
+                    raise ValueError(
+                        f"This model ({self.model_provider.model_key[0]}) or its architecture is not yet supported "
+                        "for vision tasks by mlx-vlm. Falling back to text-only mode."
+                    )
+
                 from mlx_vlm.utils import prepare_inputs
                 config = mlx_vlm.utils.get_model_config(self.model_provider.model)
                 processor = tokenizer # In mlx-vlm, the tokenizer is often the processor
@@ -1236,28 +1293,69 @@ class ResponseGenerator:
                     cache += make_prompt_cache(self.model_provider.draft_model)
 
             # Process the prompt and generate tokens
-            for gen in stream_generate(
-                model=model,
-                tokenizer=tokenizer,
-                prompt=rest,
-                max_tokens=args.max_tokens,
-                sampler=sampler,
-                logits_processors=logits_processors,
-                prompt_cache=cache,
-                draft_model=draft_model,
-                num_draft_tokens=args.num_draft_tokens,
-                prompt_progress_callback=progress,
-                prefill_step_size=self.cli_args.prefill_step_size,
-            ):
+            generation_iterator = None
+            if self.model_provider.dflash_generator is not None:
+                logging.info("Using dflash speculative decoding engine for this request.")
+                generation_iterator = self.model_provider.dflash_generator.generate(
+                    prompt=rest,
+                    max_tokens=args.max_tokens,
+                    temp=args.sampling.temperature,
+                    top_p=args.sampling.top_p,
+                    num_draft_tokens=args.num_draft_tokens,
+                    prompt_cache=cache,
+                )
+            else:
+                generation_iterator = stream_generate(
+                    model=model,
+                    tokenizer=tokenizer,
+                    prompt=rest,
+                    max_tokens=args.max_tokens,
+                    sampler=sampler,
+                    logits_processors=logits_processors,
+                    prompt_cache=cache,
+                    draft_model=draft_model,
+                    num_draft_tokens=args.num_draft_tokens,
+                    prompt_progress_callback=progress,
+                    prefill_step_size=self.cli_args.prefill_step_size,
+                )
+
+            import time
+            start_gen_time = time.time()
+            tokens_generated = 0
+            
+            for gen in generation_iterator:
+                tokens_generated += 1
+                curr_tps = None
+                if tokens_generated > 1: # Calculate TPS after at least 2 tokens to get meaningful delta
+                    elapsed = time.time() - start_gen_time
+                    if elapsed > 0:
+                        curr_tps = round(tokens_generated / elapsed, 1)
+
+                # Robust field extraction
+                text = getattr(gen, "text", "")
+                token = getattr(gen, "token", 0)
+                finish_reason = getattr(gen, "finish_reason", None)
+                
+                logprob_val = 0.0
+                top_logprobs_val = ()
+                
+                if hasattr(gen, "logprobs") and gen.logprobs is not None:
+                    try:
+                        logprob_val = gen.logprobs[token].item()
+                        top_logprobs_val = _format_top_logprobs(
+                            gen.logprobs, args.top_logprobs, tokenizer
+                        )
+                    except:
+                        pass
+
                 rqueue.put(
                     Response(
-                        gen.text,
-                        gen.token,
-                        gen.logprobs[gen.token].item(),
-                        gen.finish_reason,
-                        _format_top_logprobs(
-                            gen.logprobs, args.top_logprobs, tokenizer
-                        ),
+                        text,
+                        token,
+                        logprob_val,
+                        finish_reason,
+                        top_logprobs_val,
+                        tps=curr_tps
                     )
                 )
                 cache_key.append(gen.token)
@@ -1275,6 +1373,12 @@ class ResponseGenerator:
             )
 
         except Exception as e:
+            err_msg = traceback.format_exc()
+            try:
+                with open("/Users/erdinc/Desktop/Mlx/mlx-control-center/server_debug.txt", "a") as f:
+                    f.write(f"\n[{time.ctime()}] ERROR in _serve_single:\n{err_msg}\n")
+            except:
+                pass
             rqueue.put(e)
 
     def generate(
@@ -1356,7 +1460,9 @@ class APIHandler(BaseHTTPRequestHandler):
             "/chat/completions": self.handle_chat_completions,
         }
 
-        if self.path not in request_factories:
+        # Normalize path by removing trailing slash
+        path = self.path.rstrip('/')
+        if path not in request_factories:
             self._set_completion_headers(404)
             self.end_headers()
             self.wfile.write(b"Not Found")
@@ -1423,7 +1529,7 @@ class APIHandler(BaseHTTPRequestHandler):
         stop_words = [stop_words] if isinstance(stop_words, str) else stop_words
 
         # Create the completion request
-        request = request_factories[self.path]()
+        request = request_factories[path]()
         self.handle_completion(request, stop_words)
 
     def validate_model_parameters(self):
@@ -1520,6 +1626,7 @@ class APIHandler(BaseHTTPRequestHandler):
         tokens: Optional[List[int]] = None,
         tool_calls: Optional[List[str]] = None,
         reasoning_text: Optional[str] = None,
+        tps: Optional[float] = None,
     ) -> dict:
         """
         Generate a single response packet based on response type (stream or
@@ -1614,6 +1721,11 @@ class APIHandler(BaseHTTPRequestHandler):
         else:
             raise ValueError(f"Unsupported response type: {self.object_type}")
 
+        if tps is not None:
+            if "usage" not in response:
+                response["usage"] = {}
+            response["usage"]["tps"] = tps
+
         return response
 
     def handle_completion(self, request: CompletionRequest, stop_words: List[str]):
@@ -1681,9 +1793,16 @@ class APIHandler(BaseHTTPRequestHandler):
                 progress_callback=keepalive_callback,
             )
         except Exception as e:
+            err_msg = traceback.format_exc()
+            try:
+                # Absolute path for debugging
+                with open("/Users/erdinc/Desktop/Mlx/mlx-control-center/server_debug.txt", "a") as f:
+                    f.write(f"\n[{time.ctime()}] ERROR in handle_completion:\n{err_msg}\n")
+            except:
+                pass
             self._set_completion_headers(500)
             self.end_headers()
-            self.wfile.write(json.dumps({"error": f"{e}"}).encode())
+            self.wfile.write(json.dumps({"error": f"{e}", "traceback": err_msg}).encode())
             return
 
         # Prepare the headers
@@ -1780,8 +1899,11 @@ class APIHandler(BaseHTTPRequestHandler):
 
         # Well finally save the reason for stopping
         finish_reason = "length"
+        total_tps = None
         # Process the generated tokens
         for gen in response:
+            if hasattr(gen, "tps") and gen.tps:
+                total_tps = gen.tps
             logging.debug(gen.text)
 
             # Gather the text in tool calling or text variables
@@ -1844,6 +1966,7 @@ class APIHandler(BaseHTTPRequestHandler):
                         None,
                         tool_calls=parse_tools(tool_calls),
                         reasoning_text=reasoning_text,
+                        tps=total_tps,
                     )
                     self.wfile.write(f"data: {json.dumps(response)}\n\n".encode())
                     self.wfile.flush()
@@ -1864,6 +1987,7 @@ class APIHandler(BaseHTTPRequestHandler):
                 finish_reason,
                 tool_calls=parse_tools(tool_calls),
                 reasoning_text=reasoning_text,
+                tps=total_tps,
             )
             self.wfile.write(f"data: {json.dumps(response)}\n\n".encode())
             self.wfile.flush()
@@ -1889,6 +2013,7 @@ class APIHandler(BaseHTTPRequestHandler):
                 tokens=tokens,
                 reasoning_text=reasoning_text,
                 tool_calls=parse_tools(tool_calls),
+                tps=total_tps,
             )
             response_json = json.dumps(response).encode()
             indent = "\t"  # Backslashes can't be inside of f-strings
@@ -2169,6 +2294,11 @@ def main():
         type=int,
         help="Number of tokens to draft when using speculative decoding.",
         default=3,
+    )
+    parser.add_argument(
+        "--enable-dflash",
+        action="store_true",
+        help="Enable dflash speculative decoding (requires dflash-mlx package)",
     )
     parser.add_argument(
         "--trust-remote-code",

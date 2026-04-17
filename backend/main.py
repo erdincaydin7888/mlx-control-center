@@ -84,6 +84,8 @@ class StartRequest(BaseModel):
     model_path: str
     port: int = DEFAULT_PROXY_PORT
     adapter_path: Optional[str] = None
+    use_dflash: bool = False
+    draft_model_path: Optional[str] = None
 
 class RenameRequest(BaseModel):
     old_path: str
@@ -228,7 +230,13 @@ def start(req: StartRequest):
     if not p.exists():
         raise HTTPException(404, f"Model dizini bulunamadı: {req.model_path}")
     try:
-        info = start_model(req.model_path, req.port, req.adapter_path)
+        info = start_model(
+            req.model_path, 
+            req.port, 
+            req.adapter_path, 
+            enable_dflash=req.use_dflash,
+            draft_model_path=req.draft_model_path
+        )
         return _process_to_dict(info)
     except RuntimeError as exc:
         raise HTTPException(500, str(exc))
@@ -248,7 +256,13 @@ def switch(req: StartRequest):
     if not p.exists():
         raise HTTPException(404, f"Model dizini bulunamadı: {req.model_path}")
     try:
-        info = switch_model(req.model_path, req.port, req.adapter_path)
+        info = switch_model(
+            req.model_path, 
+            req.port, 
+            req.adapter_path,
+            enable_dflash=req.use_dflash,
+            draft_model_path=req.draft_model_path
+        )
         return _process_to_dict(info)
     except RuntimeError as exc:
         raise HTTPException(500, str(exc))

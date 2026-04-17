@@ -12,6 +12,7 @@ import signal
 import subprocess
 import time
 import sys
+import socket
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -33,6 +34,8 @@ class ProcessInfo:
     server_port: int = DEFAULT_PROXY_PORT + 10
     started_at: float = 0.0
     status: str = "stopped"  # "running" | "starting" | "stopped" | "error"
+    enable_dflash: bool = False
+    draft_model_path: str = ""
 
 
 # Modül seviyesinde aktif süreç takibi
@@ -82,6 +85,8 @@ def _detect_from_ps() -> ProcessInfo | None:
     model_name = ""
     server_port = 0
     proxy_port = 0
+    enable_dflash = False
+    draft_model_path = ""
 
     for line in lines:
         if "mlx_server_patch.py" in line and "--model" in line:
@@ -101,6 +106,12 @@ def _detect_from_ps() -> ProcessInfo | None:
             port_match = re.search(r"--port\s+(\d+)", line)
             if port_match:
                 server_port = int(port_match.group(1))
+
+            # DFlash and Draft
+            enable_dflash = "--enable-dflash" in line
+            draft_match = re.search(r"--draft-model\s+(\S+)", line)
+            if draft_match:
+                draft_model_path = draft_match.group(1)
 
         elif "mlx_proxy.py" in line:
             parts = line.split()
@@ -123,8 +134,23 @@ def _detect_from_ps() -> ProcessInfo | None:
             server_port=server_port or (proxy_port + 10 if proxy_port else DEFAULT_PROXY_PORT + 10),
             started_at=time.time(),
             status="running",
+            enable_dflash=enable_dflash,
+            draft_model_path=draft_model_path
         )
     return None
+
+
+def wait_for_port(port: int, host: str = "127.0.0.1", timeout: int = 120) -> bool:
+    """Belirtilen portun dinlemeye başlamasını bekle."""
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            with socket.create_connection((host, port), timeout=1):
+                logger.info("Port %d hazır (%.1f sn)", port, time.time() - start_time)
+                return True
+        except (ConnectionRefusedError, socket.timeout, OSError):
+            time.sleep(1)
+    return False
 
 
 def stop_model() -> bool:
@@ -174,7 +200,13 @@ def stop_model() -> bool:
     return stopped_any
 
 
-def start_model(model_path: str, proxy_port: int = DEFAULT_PROXY_PORT, adapter_path: Optional[str] = None) -> ProcessInfo:
+def start_model(
+    model_path: str, 
+    proxy_port: int = DEFAULT_PROXY_PORT, 
+    adapter_path: Optional[str] = None,
+    enable_dflash: bool = False,
+    draft_model_path: Optional[str] = None
+) -> ProcessInfo:
     """Modeli başlat. Önce mevcut aktif modeli durdurur."""
     global _active, _server_proc, _proxy_proc
 
@@ -192,6 +224,8 @@ def start_model(model_path: str, proxy_port: int = DEFAULT_PROXY_PORT, adapter_p
         server_port=server_port,
         started_at=time.time(),
         status="starting",
+        enable_dflash=enable_dflash,
+        draft_model_path=draft_model_path or "",
     )
 
     try:
@@ -206,6 +240,12 @@ def start_model(model_path: str, proxy_port: int = DEFAULT_PROXY_PORT, adapter_p
         ]
         if adapter_path:
             cmd_args.extend(["--adapter-path", adapter_path])
+        
+        if enable_dflash and draft_model_path:
+            cmd_args.append("--enable-dflash")
+        
+        if draft_model_path:
+            cmd_args.extend(["--draft-model", draft_model_path])
             
         _server_proc = subprocess.Popen(
             cmd_args,
@@ -215,8 +255,13 @@ def start_model(model_path: str, proxy_port: int = DEFAULT_PROXY_PORT, adapter_p
         )
         _active.server_pid = _server_proc.pid
 
-        # Server'ın yüklenmesini bekle (model yükleme zaman alabilir, büyük modeller için 10 sn yeterli)
-        time.sleep(10)
+        # MLX Server'ın hazır olmasını bekle (model yükleme süresine göre dinamik)
+        logger.info("MLX Server yükleniyor, port %d bekleniyor...", server_port)
+        if not wait_for_port(server_port, timeout=120):
+            _active.status = "error"
+            logger.error("MLX Server belirtilen sürede hazır olmadı (120 sn).")
+            stop_model()
+            raise RuntimeError("MLX Server yükleme zaman aşımı. Lütfen logları kontrol edin.")
 
         if _server_proc.poll() is not None:
             # Süreç hemen çıktıysa hata var
@@ -239,17 +284,15 @@ def start_model(model_path: str, proxy_port: int = DEFAULT_PROXY_PORT, adapter_p
         )
         _active.proxy_pid = _proxy_proc.pid
 
-        time.sleep(1)
-        if _proxy_proc.poll() is not None:
-            output = _proxy_proc.stdout.read() if _proxy_proc.stdout else ""
+        # Proxy'nin hazır olmasını bekle
+        if not wait_for_port(proxy_port, timeout=10):
             _active.status = "error"
-            # Server'ı da durdur
-            _server_proc.terminate()
-            logger.error("MLX Proxy başlatılamadı: %s", output[:500])
-            raise RuntimeError(f"MLX Proxy başlatılamadı: {output[:500]}")
+            logger.error("MLX Proxy hazır olmadı.")
+            stop_model()
+            raise RuntimeError("MLX Proxy başlatma zaman aşımı.")
 
         _active.status = "running"
-        logger.info("Model başarıyla başlatıldı: %s", model_name)
+        logger.info("Model başarıyla hazır ve çalışıyor: %s", model_name)
         return _active
 
     except Exception as exc:
@@ -258,10 +301,16 @@ def start_model(model_path: str, proxy_port: int = DEFAULT_PROXY_PORT, adapter_p
         raise
 
 
-def switch_model(model_path: str, proxy_port: int = DEFAULT_PROXY_PORT, adapter_path: Optional[str] = None) -> ProcessInfo:
+def switch_model(
+    model_path: str, 
+    proxy_port: int = DEFAULT_PROXY_PORT, 
+    adapter_path: Optional[str] = None,
+    enable_dflash: bool = False,
+    draft_model_path: Optional[str] = None
+) -> ProcessInfo:
     """Aktif modeli değiştir (stop → start)."""
     logger.info("Model değiştiriliyor: %s", Path(model_path).name)
-    return start_model(model_path, proxy_port, adapter_path)
+    return start_model(model_path, proxy_port, adapter_path, enable_dflash, draft_model_path)
 
 
 def read_server_logs(max_lines: int = 30) -> list[str]:

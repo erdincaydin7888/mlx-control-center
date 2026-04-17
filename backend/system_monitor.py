@@ -5,12 +5,17 @@ Sistem kaynaklarını (RAM, CPU, disk) ve inference istatistiklerini izler.
 
 from __future__ import annotations
 
+import time
 import logging
 import os
 import subprocess
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
+
+# Cache for slow disk usage calculation
+_disk_cache = {"gb": 0.0, "last_updated": 0.0}
+DISK_CACHE_TTL = 300  # 5 minutes
 
 
 @dataclass
@@ -116,16 +121,22 @@ def get_system_stats(mlx_pid: int | None = None) -> SystemStats:
             pass
 
     # Model dizini disk kullanımı (hızlı hesaplama yerine cache'lenebilir)
-    try:
-        from .config import MODELS_BASE_DIR
-        model_dir = str(MODELS_BASE_DIR)
-        result = subprocess.run(
-            ["du", "-s", "-k", model_dir],
-            capture_output=True, text=True, timeout=10,
-        )
-        kb = int(result.stdout.split()[0])
-        stats.models_disk_used_gb = round(kb / (1024**2), 1)
-    except Exception:
-        stats.models_disk_used_gb = 4200.0  # Fallback ~4.2TB
+    global _disk_cache
+    if time.time() - _disk_cache["last_updated"] > DISK_CACHE_TTL:
+        try:
+            from .config import MODELS_BASE_DIR
+            model_dir = str(MODELS_BASE_DIR)
+            result = subprocess.run(
+                ["du", "-s", "-k", model_dir],
+                capture_output=True, text=True, timeout=10,
+            )
+            kb = int(result.stdout.split()[0])
+            _disk_cache["gb"] = round(kb / (1024**2), 1)
+            _disk_cache["last_updated"] = time.time()
+        except Exception:
+            _disk_cache["gb"] = 4200.0  # Fallback ~4.2TB
+            _disk_cache["last_updated"] = time.time() - (DISK_CACHE_TTL - 30) # Retry after 30s instead of 5m if failed
+
+    stats.models_disk_used_gb = _disk_cache["gb"]
 
     return stats

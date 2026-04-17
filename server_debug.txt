@@ -1,0 +1,207 @@
+INFO:     Started server process [18891]
+INFO:     Waiting for application startup.
+2026-04-17 23:30:16,640 [INFO] backend.main: MLX Dashboard başlatılıyor...
+2026-04-17 23:30:16,646 [INFO] backend.model_scanner: Toplam 20 model bulundu.
+2026-04-17 23:30:16,646 [INFO] backend.main: Model taraması tamamlandı: 20 model
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8070 (Press CTRL+C to quit)
+INFO:     127.0.0.1:52936 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:30:17,842 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52939 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:30:20,945 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52940 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:30:24,104 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52941 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:30:27,252 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52943 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:30:30,443 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52944 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:30:33,601 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52945 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:30:36,757 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52946 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:30:39,874 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52948 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:30:43,011 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52953 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:30:46,198 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52954 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:30:49,313 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52955 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:30:52,446 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52957 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:30:55,603 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52958 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:30:58,751 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52959 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:31:01,871 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52962 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:31:05,056 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52967 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:31:08,224 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52968 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:31:11,403 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52970 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:31:14,553 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52972 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:31:17,681 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52974 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:31:20,869 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52975 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:31:23,999 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52976 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:31:27,138 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52977 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:31:30,306 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52978 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:31:33,501 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52979 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:31:36,642 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52980 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:31:39,825 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52982 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:31:42,956 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52985 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:31:46,151 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52986 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:31:49,407 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52987 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:31:52,689 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52989 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:31:55,927 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52990 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:31:59,200 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52991 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:32:02,410 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52992 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:32:05,644 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:52995 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:32:08,848 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:53000 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:32:12,115 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:53001 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:32:15,329 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:53007 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:32:18,590 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:53011 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:32:21,878 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:53012 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:32:25,149 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:53014 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:32:28,397 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:53015 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:32:31,689 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:53016 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:32:34,967 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:53017 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:32:38,250 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:53021 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:32:41,528 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:53024 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:32:44,815 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:53025 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:32:48,081 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:53026 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:32:51,363 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:53028 - "WebSocket /ws/status" [accepted]
+2026-04-17 23:32:54,585 [WARNING] backend.main: WebSocket hatası: cannot access local variable 'draft_model_path' where it is not associated with a value
+INFO:     connection open
+INFO:     connection closed

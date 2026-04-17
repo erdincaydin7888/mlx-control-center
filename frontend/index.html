@@ -248,17 +248,30 @@ html, body {
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16,185,129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16,185,129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129, 0); } }
 .status-indicator.starting { background: var(--orange); }
 
-.action-block { display: flex; align-items: center; gap: 16px; }
+.action-block { 
+  display: flex; 
+  flex-wrap: wrap; 
+  align-items: flex-end; 
+  gap: 16px; 
+  background: rgba(255,255,255,0.03);
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.config-group { display: flex; flex-direction: column; gap: 6px; }
+.config-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }
 .port-input {
-  background: transparent;
+  background: var(--bg-app);
   border: 1px solid var(--border);
   color: var(--text-main);
-  padding: 8px 12px;
+  padding: 8px 10px;
   border-radius: 6px;
-  width: 90px;
-  font-size: 16px;
+  width: 100px;
+  font-size: 15px;
   text-align: center;
+  outline: none;
 }
+.port-input:focus { border-color: var(--text-muted); }
 .btn {
   padding: 10px 20px;
   border-radius: 8px;
@@ -298,12 +311,14 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  scroll-behavior: smooth;
 }
 .msg { display: flex; gap: 16px; max-width: 900px; margin: 0 auto; width: 100%; }
 .msg-avatar { width: 36px; height: 36px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; flex-shrink: 0; }
 .msg.user .msg-avatar { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); }
 .msg.assistant .msg-avatar { background: var(--accent); color: var(--accent-fg); }
-.msg-content { flex: 1; font-size: 18px; line-height: 1.6; color: var(--text-main); padding-top: 3px; white-space: pre-wrap; word-break: break-word; }
+.msg-content { flex: 1; font-size: 18px; line-height: 1.6; color: var(--text-main); padding-top: 3px; white-space: pre-wrap; word-break: break-word; position: relative; }
+.tps-badge { font-family: monospace; font-size: 12px; color: var(--accent); background: rgba(34, 211, 238, 0.1); padding: 2px 6px; border-radius: 4px; margin-left: 8px; border: 1px solid rgba(34, 211, 238, 0.2); vertical-align: middle; font-weight: 700; }
 
 .chat-input-wrapper {
   padding: 24px 32px;
@@ -612,7 +627,7 @@ html, body {
           <div class="progress-bg"><div class="progress-fg mem" id="sysMemBar" style="width:0%"></div></div>
         </div>
         <div class="sys-group">
-          <div class="sys-row"><span>CPU</span> <span id="sysCpu" class="sys-val">—</span></div>
+          <div class="sys-row"><span>GPU</span> <span id="sysCpu" class="sys-val">—</span></div>
           <div class="progress-bg"><div class="progress-fg" id="sysCpuBar" style="width:0%"></div></div>
         </div>
         <div style="display:flex; flex-direction:column; gap:2px; font-size:11px; color:var(--text-dim); font-weight:600; min-width:110px">
@@ -953,6 +968,9 @@ function renderMain() {
   const isAct = m.path === activePath;
   const isRunning = activeStatus === 'running';
   
+  // DFlash checkbox state: if it's the active model, use its state. Otherwise default to checked (user preference).
+  const dflashStatus = isAct ? activeProcess.enable_dflash : true;
+  
   let actionHtml = '';
   if (m.format !== 'gguf') {
     if (isAct) {
@@ -982,19 +1000,27 @@ function renderMain() {
         <div class="model-publisher">${m.publisher} • Modeli Local Dizin: ~.lmstudio/models</div>
       </div>
       <div class="action-block">
-        <div style="display:flex; flex-direction:column; gap:4px; max-width:90px">
-          <label style="font-size:13px; color:var(--text-dim); text-transform:uppercase">Max Tokens</label>
+        <div class="config-group" style="width: 120px;">
+          <label class="config-label">Max Tokens</label>
           <input type="number" id="maxTokensInp" class="port-input" style="width:100%" value="${defaultTokens}">
         </div>
-        <div style="display:flex; flex-direction:column; gap:4px; max-width:80px">
-          <label style="font-size:13px; color:var(--text-dim); text-transform:uppercase">Proxy Port</label>
-          <input type="number" id="portInp" class="port-input" value="${isAct ? activeProcess.proxy_port || 8087 : 8087}">
+        <div class="config-group" style="width: 100px;">
+          <label class="config-label">Proxy Port</label>
+          <input type="number" id="portInp" class="port-input" style="width:100%" value="${isAct ? activeProcess.proxy_port || 8087 : 8087}">
         </div>
-        <div style="display:flex; flex-direction:column; gap:4px; max-width:140px">
-          <label style="font-size:13px; color:var(--text-dim); text-transform:uppercase">LoRA Adapter</label>
+        <div class="config-group" style="width: 140px;">
+          <label class="config-label">LoRA Adapter</label>
           <input type="text" id="adapterInp" class="port-input" style="width:100%" placeholder="(Opsiyonel)">
         </div>
-        <div style="width:1px; height:32px; background:var(--border); margin:0 8px"></div>
+        <div class="config-group" style="width: 140px;">
+          <label class="config-label">Draft Model</label>
+          <input type="text" id="draftModelInp" class="port-input" style="width:100%" placeholder="(Opsiyonel path)">
+        </div>
+        <div class="config-group" style="width: 60px; align-items: center;">
+          <label class="config-label">DFlash</label>
+          <input type="checkbox" id="useDFlashInp" style="width:20px; height:20px; cursor:pointer; margin-top:4px" ${dflashStatus ? 'checked' : ''}>
+        </div>
+        <div style="width:1px; height:32px; background:var(--border); margin:0 4px"></div>
         ${actionHtml}
       </div>
     </header>
@@ -1008,7 +1034,10 @@ function renderMain() {
             chatHistory.map(c => `
               <div class="msg ${c.role}">
                 <div class="msg-avatar">${c.role === 'user' ? 'U' : 'AI'}</div>
-                <div class="msg-content">${escapeHTMLEncode(c.content)}</div>
+                <div class="msg-content">
+                  ${escapeHTMLEncode(c.content)}
+                  ${(c.role === 'assistant' && c.tps) ? `<span class="tps-badge" title="Üretim Hızı">⚡ ${c.tps} t/s</span>` : ''}
+                </div>
               </div>
             `).join('')
           }
@@ -1107,7 +1136,13 @@ function handleEnter(e) {
 
 function scrollToBot() {
   const el = document.getElementById('chatArea');
-  if(el) el.scrollTop = el.scrollHeight;
+  if(el) {
+    requestAnimationFrame(() => {
+       el.scrollTop = el.scrollHeight;
+       // Double check for very long content
+       setTimeout(() => { el.scrollTop = el.scrollHeight; }, 10);
+    });
+  }
 }
 
 function escapeHTMLEncode(s) {
@@ -1308,13 +1343,25 @@ async function ctxDo(action) {
 async function doStart() {
   const p = document.getElementById('portInp').value;
   const adp = document.getElementById('adapterInp')?.value.trim();
-  const reqPay = { model_path: selectedData.model.path, port: parseInt(p) };
+  const dflash = document.getElementById('useDFlashInp')?.checked;
+  const draft = document.getElementById('draftModelInp')?.value.trim();
+  
+  const reqPay = { 
+    model_path: selectedData.model.path, 
+    port: parseInt(p),
+    use_dflash: !!dflash,
+    draft_model_path: draft || null
+  };
   if(adp) reqPay.adapter_path = adp;
   
   toast('Süreç başlatılıyor...');
   try {
-    await fetchApi('POST', '/api/start', reqPay);
+    const res = await fetchApi('POST', '/api/start', reqPay);
+    activeProcess = res; 
+    activePath = res.model_path; // Set path immediately
+    activeStatus = res.status;   // Set status immediately
     chatHistory = [];
+    renderMain();
   } catch(e) { toast('Hata: ' + e.message); }
 }
 
@@ -1330,13 +1377,25 @@ async function doStop() {
 async function doSwitch() {
   const p = document.getElementById('portInp').value;
   const adp = document.getElementById('adapterInp')?.value.trim();
-  const reqPay = { model_path: selectedData.model.path, port: parseInt(p) };
+  const dflash = document.getElementById('useDFlashInp')?.checked;
+  const draft = document.getElementById('draftModelInp')?.value.trim();
+  
+  const reqPay = { 
+    model_path: selectedData.model.path, 
+    port: parseInt(p),
+    use_dflash: !!dflash,
+    draft_model_path: draft || null
+  };
   if(adp) reqPay.adapter_path = adp;
   
   toast('Bellek aktarılıyor...');
   try {
-    await fetchApi('POST', '/api/switch', reqPay);
+    const res = await fetchApi('POST', '/api/switch', reqPay);
+    activeProcess = res;
+    activePath = res.model_path; // Set path immediately
+    activeStatus = res.status;   // Set status immediately
     chatHistory = [];
+    renderMain();
   } catch(e) { toast('Hata: ' + e.message); }
 }
 
@@ -1394,7 +1453,11 @@ async function sendChat() {
        max_tokens: tokensToGenerate,
        temperature: temp
     });
-    chatHistory.push({ role: 'assistant', content: res.choices[0].message.content });
+    chatHistory.push({ 
+       role: 'assistant', 
+       content: res.choices[0].message.content,
+       tps: res.usage ? res.usage.tps : null 
+    });
     clearImage();
   } catch(e) {
     chatHistory.push({ role: 'assistant', content: `[SYSTEM ERROR] ${e.message}` });
@@ -1434,17 +1497,20 @@ function connectWS() {
         subTxt = `🧠 Model RAM Ayak İzi: <span style="color:var(--accent); font-weight:600; font-size:16px">${d.system.mlx_process_memory_gb} GB</span> Ayrıldı`;
     }
     document.getElementById('topActiveInfo').innerHTML = `
-      <div style="display:flex; align-items:center; gap:12px; color:${activeStatus === 'running' ? '#fff' : 'var(--text-dim)'}">
-         <span class="${tIcon}" style="width:12px; height:12px; box-shadow:0 0 10px var(--green)"></span> 
-         <span style="display:flex; align-items:center; gap:6px">
-           ${tName}
-           ${activeStatus === 'running' ? `<button class="copy-btn" style="width:20px; height:20px;" onclick="copyToClipboard('${d.active.model_path}', 'Model Yolu')" title="Model Yolunu Kopyala">${ICONS.copy}</button>` : ''}
-         </span>
-         ${activeStatus === 'running' ? `<div class="topbar-close-btn" onclick="doStop()" title="Modeli Durdur">${ICONS.square_stop}</div>` : ''}
-      </div>
-      <div style="font-size:15px; font-weight:500; color:var(--text-muted); opacity:0.9; display:flex; align-items:center; gap:8px">
-        ${subTxt}
-        ${activeStatus === 'running' ? `<button class="copy-btn" style="width:20px; height:20px;" onclick="copyToClipboard('http://localhost:${d.active.proxy_port}/v1', 'Endpoint')" title="Endpointi Kopyala">${ICONS.copy}</button>` : ''}
+      <div style="display:flex; align-items:center; gap:16px; background:rgba(0,0,0,0.3); padding:8px 16px; border-radius:12px; border:1px solid rgba(255,255,255,0.05)">
+         <div style="display:flex; align-items:center; gap:8px">
+            <span class="${tIcon}" style="width:10px; height:10px; box-shadow:0 0 8px var(--green)"></span>
+            <span style="font-weight:700; font-size:18px; color:#fff; letter-spacing:-0.01em">${tName}</span>
+         </div>
+         ${activeStatus === 'running' ? `
+           <div style="width:1px; height:20px; background:rgba(255,255,255,0.1)"></div>
+           <div style="font-size:14px; color:var(--text-muted); font-weight:500;">
+             ${d.system.mlx_process_memory_gb} GB RAM
+           </div>
+           <button class="topbar-close-btn" onclick="doStop()" title="Modeli Durdur" style="width:32px; height:32px; border-radius:8px">
+             ${ICONS.square_stop}
+           </button>
+         ` : ''}
       </div>
     `;
 
