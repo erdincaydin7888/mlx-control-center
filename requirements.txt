@@ -10,3 +10,4 @@ requests
 numpy
 pandas
 matplotlib
+dflash-mlx>=0.1.3

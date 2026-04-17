@@ -9,7 +9,7 @@ A modern, fast, and feature-rich React/HTML Dashboard to control and manage Appl
 * **Consolidated Automation Tools:** Now includes a full suite of automation scripts (`automation/`) and benchmarking tools (`tools/`) directly in the repository.
 * **Integrated HW Monitor:** Displays system RAM and CPU compute metrics in real time, now elegantly integrated into the top-left header.
 * **Modern AI Prompt Box:** High-fidelity glassmorphic chat interface with Search, Think, Canvas modes, and Voice/Image support.
-* **Instant Start & Switch:** Launch or swap MLX models instantly without typing terminal commands. 
+* **DFlash & Speculative Decoding:** Integrated support for `dflash-mlx` engine to achieve 2x+ speedups using draft models.
 * **Lightweight:** Uses raw HTML/JS for frontend and FastAPI for backend, no `node_modules` overhead.
 
 ---
@@ -25,7 +25,7 @@ Apple Silicon MLX tabanlı Doğal Dil İşleme (LLM) modellerini HTTP Proxy üze
 * **Konsolide Araç Seti:** Tüm otomasyon betikleri (`automation/`) ve benchmark araçları (`tools/`) artık tek bir çatı altında deponun içindedir.
 * **Entegre Sistem İzleme:** Sistem RAM ve CPU durumlarını canlı olarak doğrudan başlık alanında (sol üst) gösterir.
 * **Modern AI Mesaj Kutusu:** Search, Think, Canvas modları ile Sesli/Görsel girdi desteği barındıran premium sohbet arayüzü.
-* **Hızlı Başlat ve Değiştir:** Modelleri konsola kod yazmadan hemen aktif edebilir veya anında değiştirebilirsiniz.
+* **DFlash & Spekülatif Çözümleme:** `dflash-mlx` motoru desteği ile draft modeller kullanarak 2 katından fazla hızlanma sağlar.
 * **Hafif Çekirdek:** FastAPI ve saf HTML+Javascript kullanır, derleme süreci barındırmaz.
 
 ## 🚀 Quick Start / Hızlı Başlangıç
